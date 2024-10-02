@@ -170,8 +170,8 @@ ex)	for alpha in alpha_list: # 각 alpha를 적용한 모델을 따로 만들어
 	- 로지스틱 알고리즘은 선형회귀와 동일하게 선형 방정식을 학습한다.
 	- z = a*(Weight) + b*(Length) + c*(Diagonal) + d*(Height) + e*(Width) + f
 	- 위의 공식에서 a ~ e는 가중치, f는 절편을 의미한다.
-	- 이 z값은 이중 분류인지, 다중 분류인지에 따라 다르게 처리된다.
-	- 이중 분류에서는 z값을 시그모이드 함수를 통해서 1 / 1+e^(-z) 를 통해 양성 클래스에 대한 확률로 변환하고, 나머지 음성 클래스에 대한 확률은 이 확률을 1에서 제외하여 알 수 있다.
+	- 이 z값은 이진 분류인지, 다중 분류인지에 따라 다르게 처리된다.
+	- 이진 분류에서는 z값을 시그모이드 함수를 통해서 1 / 1+e^(-z) 를 통해 양성 클래스에 대한 확률로 변환하고, 나머지 음성 클래스에 대한 확률은 이 확률을 1에서 제외하여 알 수 있다.
 	- 다중 분류에서는 각 클래스에 해당하는 z값들을 모두 계산한 뒤 소프트맥스함수를 통해서 모든 z값을 e의 지수로 하여 양수로 변환해준 다음 모두 더한 뒤 분모에 두고, 각 클래스의 z값을 분자에 두어서 각 클래스의 확률을 계산할 수 있다.
 	- z값은 Gradient Descent 알고리즘을 통해 손실함수가 최소가 되는 지점에서의 가중치와 절편을 구하고, 그 때의 z값을 각 클래스마다 계산한다.
 
@@ -181,12 +181,14 @@ ex)	for alpha in alpha_list: # 각 alpha를 적용한 모델을 따로 만들어
 	- 이럴 때에는 지금까지 모인 데이터를 우선 학습시켜 놓고, 점진적으로 뒤에 이어지는 데이터를 학습해야 한다.
 	- 이런 점진적 학습을 하는 대표적인 예시가 경사 하강법이다.
 
+
 13. 경사 하강법
 	: 점진적 학습의 대표적인 예시로, 훈련 세트에서 랜덤하게 하나의 샘플을 선택하여 가파른 경사를 내려가는 방식이다.
 	- 확률적 경사 하강법 : 하나의 케이스 마다 손실 함수를 계산하고, 이를 줄이는 방향으로 가중치와 절편을 조정한 다음 다음 모든 케이스에 대해 이를 반복하는 것.
 	- 미니배치 경사 하강법 : 특정 개수의 케이스마다 손실 함수를 계산하고, 이를 줄이는 방향으로 가중치와 절편을 조정한 다음 반복. (즉, 지정된 개수의 케이스의 손실값을 평균내서 가중치와 절편을 정함)
 	- 배치 경사 하강법 : 각 epoch당 전체 케이스에 대해 이를 반복한다. 전체 데이터를 사용하기 때문에 경사가 완만하다는 장점이 있다. (데이터의 전체 개수가 달라지거나 하는 경우에는 추천되지 않는다.)
 	- 위의 경사 하강법들은 공통적으로 반복하여 가중치와 절편을 수정하고, 손실 함수가 최소가 되는(다시 올라가게 되면) 중지하고, 최소인 지점에서의 가중치와 절편을 선택하게 된다.
+
 
 14. 손실 함수
 	: 어떤 문제에서 이 머신러닝 알고리즘이 얼마나 엉터리인지를 측정하는 기준이다.
@@ -679,6 +681,54 @@ if __name__ == '__main__':
     km = KMeans(n_clusters = 3, n_init = 20)
     km.fit(fruits_300)
     print(np.unique(km.labels_, return_counts=True)) # (array([0, 1, 2]), array([ 91,  98, 111], dtype=int64))
+
+
+### DNN(Deep Neural Network)
+# tensorflow의 keras에서 데이터 불러오기
+	- 이번에 주로 사용할 Fashion Mnist 데이터를 tensorflow의 keras에서 불러올 수 있다.
+	- keras.datasets.fashion_mnist.load_data()로 데이터를 불러올 수 있는데 이 함수는 2개의 데이터 쌍을 반환한다.
+	- (학습 데이터 세트), (테스트 데이터 세트)의 두 세트를 반환함.	그래서 아레와 같이 데이터를 받아야 함.
+(train_input, train_target), (test_input, test_target) = keras.datasets.fashion_mnist.load_data()
+	- 위의 학습 데이터와 테스트 데이터는 이미 나누어진 상태로 고정된 데이터들이다.
+	- fashion_mnist 또한 mnist와 같이 10개의 클래스를 구분하는 문제이다.
+
+# 로지스틱 회귀를 통한 Fashion_mnist 데이터 학습.
+	1. 로지스틱 회귀는 선형 모델이므로 from sklearn.linear_model import LogisticRegression 으로 불러온다.
+lr = LogisticRegression(max_iter=1000)
+	2. 선형 모델의 경우 데이터의 전처리가 필요하므로 (-1, 28, 28)의 형태로 되어있는 데이터를 (-1, 28*28)의 형태로 바꾸어서 StandardScaler에서 전처리를 해준다.
+train_input1d = train_input.reshape(-1. 28*28)
+test_input1d = test_input.reshape(-1. 28*28)
+ss.fit(train_input)
+train_scaled = ss.transform(train_input1d)
+test_scaled = ss.transform(test_input1d)
+	3. 로지스틱 회귀 모델에 넣어 학습을 한 후 테스트 세트에 대한 점수를 확인한다.
+lr.fit(train_scaled, train_target)
+print(lr.score(test_scaled, test_target))
+
+# SGDClassifier(확률적 경사 하강법)을 이용한 로지스틱 회귀
+	1. sc = SGDClassifier(loss='log_loss', max_iter=1000) 로 객체 선언
+	2. 위의 전처리 과정
+	3. cross_validate()함수에 넣어서 교차 검증 및 일반화 점수를 확인한다.
+from sklearn.model_selection import cross_validate
+scores = cross_validate(sc, train_scaled, train_target, cv=10, n_jobs=-1)
+print(scores['test_score'])로 점수 확인.
+
+# keras의 DNN을 사용하여 학습
+	1. 케라스의 모델 만들기
+		- 학습 데이터 중 일부를 검증 데이터로 뺀다.
+		- DNN은 교차 검증을 사용하지 않음. 충분히 데이터가 많기 때문에 교차검증을 하지 않아도 충분히 일반화된 성능이라고 유추할 수 있다.
+	2. dense 층 구성
+		- Dense층은 모든 입력 뉴런이 모든 출력 뉴런과 연결되는 층이다.
+		- 첫 Dense층은 데이터의 특성(여기선 784개)의 개수가 입력으로 들어오고, 출력의 개수는 우리가 정할 수 있다.
+		- 마지막 Dense층은 출력층이라고 해서 결과로 나눌 클래스(여기선 10개)의 개수로 한다.
+		- 또한 각 층은 전 층의 출력 개수를 입력의 개수로 받고 자신이 출력할 개수를 정한다.
+		- 마지막 Dense층(출력층)은 softmax를 사용한다.
+	3. 학습
+		- 위와 같이 모델의 층을 다 구성했다면 모델이 만들어지고, 이제 학습을 진행한다
+		- model.compile(loss='sparse_categorical_crossentropy', metrics=['accuracy'])와 같이 모델에서 사용할 손실 함수를 지정해주고, 정확도를 출력하도록 한다.
+		- model.fit(train_scaled, train_target, epochs=5)로 테스트 세트와, epochs(몇번 반복할지) 를 정해주며 모델이 학습을 시작한다.
+
+
 
 
 
