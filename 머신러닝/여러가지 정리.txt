@@ -762,6 +762,43 @@ model.summary()
 	: dense층은 완전연결층으로 1D의 데이터 샘플만을 받으므로, Flatten층을 통해 다차원 데이터를 1차원으로 펼쳐주는 역할을 한다.
 
 
+### 신경망 모델 활용
+# FashionMnist 데이터를 가지고 간단한 Dense층들만을 이용해서 간단한 모델을 만들어보자.
+	- 간단한 모델을 생성하여 반환해주는 함수를 작성해보자. 매개변수로 모델들이 들어있는 리스트를 받고, 이를 기본 모델 (Flatten, 최초 Dense층, 출력층)만 있는 모델의 출력 층 전에 넣어주는 함수로 설계.
+	- (train_input, train_target), (test_input, test_target) = keras.datasets.fashion_mnist.load_data() 로 데이터를 불러온다.
+	- 모델을 만들고, summary() 함수를 통해서 내가 생각한 구조가 맞는지 확인.
+	- 모델을 compile()하면서, optimizer와, loss함수, 학습률(learning_rate)를 optimizer와 함께 설정해준다
+	- 모델을 fit()하면서 학습 데이터 세트, 검증 데이터 세트, epochs를 지정해준다. 이 때 verbose도 지정해줄 수 있는데 기본값은 1로 학습을 하면서 그 과정을 보여주는 것이다.
+	- 또한 fit()함수의 반환값으로 history를 받을 수 있는데, history.history에는 dictionary의 형태로 각 key에 대한 각 단계에서의 점수들이 저장된다.
+
+# 검증 데이터 손실값과 적당한 epochs값 찾기
+	- 모델을 fit()하고 나온 history객체에는 각 epochs마다 검증 세트에 대한 손실값과 정확도도 들어있다.
+	- 이 값들을 plot으로 그려보고, loss가 점점 감소하다가 증가하게 되는 그 시점의(최소값)을 찾아서 그 때를 적정 epochs라고 생각하자.
+
+# Dropout층.
+	: 드롭 아웃은 은닉층(입력과 출력 사이에 있는 층)에 적용하는 방식으로 작용하는 층이다.
+	model.add(keras.layers.Dense(100, activation='relu'))
+	model.add(keras.layers.Dropout(0.3))
+	model.add(keras.layers.Dense(10, activation='softmax'))
+	- 예를 들어 위와 같이 Dropout 층이 들어간다면, 이전 은닉층의 100개의 뉴런이 Dropout층으로 들어올 텐데, 이 중 랜덤으로 30%를 비활성화 하고, 다음 층의 입력으로 내보내는 역할을 한다.
+	- 드롭 아웃 층을 사용하는 이유는, 학습 도중에 뉴런들이 특정 패턴이나, 뉴런에 지나치게 의존하지 않도록 도와준다. 만약 특정 뉴런이 학습에 미치는 영향이 지배적이라면, 그 뉴런이 비활성화 되었을 때 다른 뉴런들도 학습에 영향을 더 줄 수 있기 때문이다.
+
+# CallBack
+	: 훈련 도중에 어떤 작업을 수행할 수 있게 하는 객체이다.
+	- callback은 우리가 모델을 학습하면서, 각 epoch마다 callback의 조건을 만족하거나, 학습이 끝난 후 지정한 조건의 step에서의 상태(가중치)를 하나의 모델로 저장하거나, 다른 일을 수행하게 한다.
+		1. val_loss가 가장 작았을 때의 가중치로 모델을 저장할 수도 있다.
+		2. val_loss가 가장 작았을 때를 기억하고, 그 이후로 val_loss가 두번 연속 증가하면 조기종료를 하고, val_loss가 가장 작았을 때 or 조기종료를 할 때 기준의 모델을 저장한다.
+		3. 학습 도중에 learning_rate를 조정할 수도 있음.
+ex)	학습 종료 후 val_loss가 가장 작았을 때를 기억하고, 파일로 저장하는 콜백
+	checkpoint_cb = keras.callbacks.ModelCheckpoint('best_model.h5', save_best_only=True, monitor='val_loss')
+	- 위 콜백은 val_loss를 기준으로 가장 낮았던 시점의 모델을 best_model.h5라는 파일로 저장하는 것.
+
+ex)	val_loss가 두번 연속으로 다시 증가하는 시점에 학습을 조기종료하고, 가장 좋았던 시점의 모델을 저장하는 callback
+	early_stopping_cb = keras.callbacks.EarlyStopping(patience=2, restore_best_weights=True)
+
+
+
+
 
 
 
