@@ -7,17 +7,26 @@ from torch.utils.data import DataLoader, random_split
 class myModel(nn.Module):
     def __init__(self):
         super(myModel, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=10, kernel_size=3, stride=1, padding=1)
+        self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv2d(in_channels = 10, out_channels = 32, kernel_size=3, padding='same')
+        self.pooling2 = nn.MaxPool2d(kernel_size=2, stride=2) # 7 x 7 x 32의 특성맵 크기.
         self.flatten = nn.Flatten()
-        self.fc = nn.Linear(28*28, 100)
+        self.fc = nn.Linear(7 * 7 * 32, 100)
         self.relu = nn.ReLU()
         self.fc2 = nn.Linear(100, 10)
-        self.softmax = nn.Softmax(dim=1)
+        # self.softmax = nn.Softmax(dim=1) # dim=1은 axis를 말하며, 1번 차원에 대해 소프트맥스를 사용, 각 클래스의 확률들에
     def forward(self, x):
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.pooling(x)
+        x = self.conv2(x)
+        x = self.relu(x)
+        x = self.pooling2(x)
         x = self.flatten(x)
         x = self.fc(x)
         x = self.relu(x)
         x = self.fc2(x)
-        x = self.softmax(x)
         return x
     
     
