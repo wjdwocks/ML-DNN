@@ -797,7 +797,12 @@ ex)	val_loss가 두번 연속으로 다시 증가하는 시점에 학습을 조�
 	early_stopping_cb = keras.callbacks.EarlyStopping(patience=2, restore_best_weights=True)
 
 
+### 합성곱 신경망
+# 완전 연결 신경망
+	: 입력 뉴런과 출력 뉴런을 모두 완전히 연결하여 각각마다 가중치를 갖게 하는 완전연결층으로 이루어진 신경망을 의미.
 
+# 합성곱 신경망 개념
+	: 
 
 
 

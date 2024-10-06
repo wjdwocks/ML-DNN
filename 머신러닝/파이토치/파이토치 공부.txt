@@ -1,0 +1,96 @@
+# 파이토치에서의 학습 순서
+1. 데이터를 불러오고, 순서대로 전처리를 해줄 pipeline를 구축.
+ex)	데이터 세트를 텐서의 형태로 바꾸고, 평균 0.5, 표준편차 0.5로 전처리를 하는 순서.
+	transform = torchvision.transforms.Compose(
+		torchvision.transforms.ToTensor(),
+		torchvision.Normalize((0.5,), (0.5,))
+
+2. 데이터 샘플(MNIST, FashionMNIST, CIFAR-10)을 훈련 세트 / 테스트 세트 들을 가져온다.(다운로드)
+ex)	FashionMNIST의 경우
+	train_dataset = torchvision.datasets.FashionMNIST(
+		root='./fashionMNIST',
+		train=True,
+		download=True,
+		transform=transform
+
+3. 학습 데이터 세트를 검증 데이터 세트로 나눔.
+ex)	검증 세트를 20%만 떼준다면
+	train_size = int(0.8 * len(train_dataset))
+	val_size = len(train_dataset) - train_size
+	train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [train_size, val_size])
+
+4. 각 데이터 세트를 배치단위로 나누어줌.
+ex)	각 데이터 세트를 64개의 배치 사이즈로 나눈다.
+	train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
+	test_loader = DataLoader(test_dataset, batch_size=64, shuffle=True)
+	val_loader = DataLoader(val_dataset, batch_size=64, shuffle=True)
+
+5. 파이토치에서의 모델 정의.
+	: 아레는 nn.Module을 상속받는 내 모델을 정의한 클래스를 만든다.
+
+ex) 	torch.nn.Module을 상속받는 클래스를 만들어서, Layer를 정의하고, 순전파, forward()를 정의한다.
+class MyModel(nn.Module):
+	def __init__(self):
+		super(MyModel, self).__init__() # 이거로 부모 클래스의 생성자를 호출하여 부모 클래스의 기능을 사용할 수 있게 함. (model.train()이라던가, 등등)
+		self.flatten = nn.Flatten()
+		self. fc1 = nn.Linear(28*28, 100)
+		self.relu = nn.LeRU()
+		self.fc2 = nn.Linear(100, 10)
+		self.softmax = nn.Softmax(dim=1) # 여기서 dim=1은 axis=1처럼 뒷 차원 것을 기준으로 사용할 것임을 의미.
+	def forward(self, x): # model(inputs)를 하면 호출되는 순전파. 아레의 과정을 거쳐 학습이 진행됨.
+		x = self.flatten(x) # x에는 예제에선 
+		x = self.fc1(x)
+		x = self.relu(x)
+		x = self.fc2(x)
+		x = self.softmax(x)
+		return x
+	- model = MyModel() # 을 통해서 모델을 객체화함.
+
+6. optimizer와 criterion(손실함수)를 정의한다.
+ex)	optimizer = torch.optim.Adam(model.parameters(), lr=0.001) # 모델의 학습 가능한 파라미터들을 미리 알려주어 학습 과정에서 업데이트할 대상으로 지정한다.
+		- 미리 옵티마이저가 파라미터를 알지 못하면 어떤 값을 업데이트해야 할지 모름.
+	criterion = nn.CrossEntropyLoss() # 모델의 예측과 실제 정답 간의 차이를 계산하는 손실 함수를 정의하는 역할을 함.
+
+7. 실제 학습을 수행하는 함수 정의.
+	: 학습을 어떻게 수행할 것인지를 함수로 만들어서 이 함수에 따라 학습이 진행되도록 함.
+ex)	
+    def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs = 50):
+        for epoch in range(num_epochs):
+            model.train() 
+            train_loss = 0
+            correct_train = 0
+            total_train = 0
+            correct_val = 0
+            total_val = 0
+            for inputs, targets in train_loader:
+                optimizer.zero_grad() 
+                outputs = model(inputs) 
+                loss = criterion(outputs, targets) 
+                loss.backward()  
+                optimizer.step() 
+                train_loss += loss.item()
+                _, predicted = torch.max(outputs, dim=1) 
+                correct_train += (predicted == targets).sum().item() 
+                total_train += targets.size(dim=0) 
+            
+            model.eval()
+            val_loss =  0
+            with torch.no_grad():
+                for inputs, targets in val_loader:
+                    outputs = model(inputs)
+                    loss = criterion(outputs, targets)
+                    val_loss += loss.item()
+                    # 정확도
+                    _, predicted = torch.max(outputs, dim=1)
+                    correct_val = correct_val + (predicted == targets).sum().item()
+                    total_val += targets.size(dim=0)
+                    
+            train_loss /= len(train_loader)
+            val_loss /= len(val_loader)
+            
+            
+            print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {(correct_train/total_train):.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {(correct_val/total_val):.4f}')
+        torch.save(model.state_dict(), 'final_model.pth')
+
+
+
