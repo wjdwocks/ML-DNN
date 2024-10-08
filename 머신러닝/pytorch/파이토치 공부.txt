@@ -42,7 +42,7 @@ class MyModel(nn.Module):
 		x = self.fc1(x)
 		x = self.relu(x)
 		x = self.fc2(x)
-		x = self.softmax(x)
+		x = self.softmax(x) # 얘는 cross_entropy_loss인 경우 안해도 자동으로 해준다고 함.
 		return x
 	- model = MyModel() # 을 통해서 모델을 객체화함.
 
@@ -89,8 +89,64 @@ ex)
             val_loss /= len(val_loader)
             
             
-            print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {(correct_train/total_train):.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {(correct_val/total_val):.4f}') # 출력을 위한 
-        torch.save(model.state_dict(), 'final_model.pth')
+            print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {(correct_train/total_train):.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {(correct_val/total_val):.4f}') # 출력을 위한 코드
+        torch.save(model.state_dict(), 'final_model.pth') # 현재 모델에 저장된 파라미터들의 가중치를 다운로드하여 나중에 바로 불러와서 학습하면 같은 결과가 나올 것.
+
+
+8. 조기종료를 위한 callback에 대해 공부해보자. 
+	: 내가 epoch를 설정하여 학습을 하면 잘 맞추지 않는 이상, 최적의 결과를 얻기 힘들 것이다. (overfitting or underfitting)
+	- 그렇기 때문에, validation loss의 값이 일정 수준 줄어들었다가, 다시 증가하는 시점에 조기종료를 실행하고, validation loss가 제일 낮았던 시점의 모델을 저장하도록 변경해보자.
+	1. train_model()에 patience 매개변수를 추가함.
+	2. 함수의 여러 멤버변수를 추가함
+		- best_model_state = None # 가장 최고의 성능이었을 때의 모델의 가중치 파라미터를 저장하기 위해 저장할 객체를 만들어놓는것임.
+		- best_val_loss = float('inf') # 가장 validation loss가 낮았을 때를 저장해서 증가했는지를 비교할 값을 저장함. float('inf')(최대)로 하여 무조건 첫 번째 epoch에 validation_loss를 저장하도록 함.
+		- patience_counter = 0 # 이게 매개변수 patience와 같아지면 학습을 종료하고, 저장해 놓은 model.state_dict()를 이용하여 모델을 저장한다.
+ex)	각 epoch의 마지막에 다음의 코드를 추가함.
+	if val_loss < best_val_loss: # 이번 validation_loss가 지금까지의 최소 validation_loss보다 작다면 
+		best_val_loss = val_loss # best_val_loss를 업데이트함.
+		patience_counter = 0 # patience_counter를 0으로 초기화
+		best_model_state = model.state_dict() # 지금 매개변수 가중치를 저장함.
+	else:
+		patience_counter += 1 # 그게 아니라면 patience_counter를 1증가시킴.
+		if patience_counter >= patience: # 넘어선다면
+			break # 학습을 종료함 (epoch반복문 종료)
+torch.save(best_model_state, 'pytorch/best_model.pth') # 학습이 종료된 후 저장함.
+
+
+9. dropout층과 Batch Normalization층.
+	- dropout 
+		: 과적합을 방지하기 위해 사용되며, 뉴런을 무작위로 비활성화하여 학습 중에 각 뉴런의 의존성을 줄인다.
+		- Fully Connected Layer에서 주로 사용함. (Linear층과 Linear층 사이에)
+ex)	이런 순서로 진행됨
+	x = fc(x)
+	x = relu(x)
+	x = dropout(x)
+	x = fc2(x)
+	- Batch Normalization 
+		: 학습 속도를 높이고, 안정적인 학습을 위해 각 층의 입력을 정규화하여 분포가 변하지 않도록 한다. / 각 미니배치의 평균과 표준편차를 사용해 정규화하여, 학습을 더 안정적이고 빠르게 만드는 기법.
+		- Convolution층에서 주로 사용함. 
+ex)	이런 순서로 진행됨.
+	x = self.conv1(x)
+	x = self.batchnorm1(x)
+	x = self.relu(x)
+	x = self.pooling(x)
+	x = self.conv2(x)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

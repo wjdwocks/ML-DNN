@@ -18,15 +18,22 @@ class myModel(nn.Module):
         # self.softmax = nn.Softmax(dim=1) # dim=1은 axis를 말하며, 1번 차원에 대해 소프트맥스를 사용, 각 클래스의 확률들에
     def forward(self, x):
         # print(x.shape) # (64, 1, 28, 28)
-        x = self.pooling(nn.functional.relu(self.conv1(x))) 
+        # x = self.pooling(nn.functional.relu(self.conv1(x))) 
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.pooling(x)
         # print(x.shape) # (64, 10, 14, 14)
-        x = self.pooling(nn.functional.relu(self.conv2(x)))
+        x = self.conv2(x)
+        x = self.relu(x)
+        x = self.pooling(x)
         # print(x.shape) # (64, 32, 7, 7)
         x = self.flatten(x)
         # print(x.shape) # (64, 1568)
-        x = nn.functional.relu(self.fc(x))
+        x = self.fc(x)
+        x = self.relu(x)
+        x = nn.functional.dropout(x, 0.2)
         # print(x.shape) # (64, 100)
-        x = nn.functional.relu(self.fc2(x))
+        x = self.fc2(x)
         # print(x.shape) # (64, 10)
         # x = nn.functional.softmax(x)
         return x
@@ -69,7 +76,11 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
     
-    def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs = 50):
+    def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs = 50, patience = 2):
+        # best_model_state = None # None으로 놓아도 되는데 공부중이니까 아레와 같이 놓자
+        best_model_state = model.state_dict()
+        best_val_loss = float('inf')
+        patience_counter = 0
         for epoch in range(num_epochs): # 각 에포크마다 아레를 반복.
             model.train() # 모델을 훈련 모드로 설정
             ## model.eval() ## 평가 -> 자동으로 가중치 고정
@@ -109,7 +120,18 @@ if __name__ == '__main__':
             
             
             print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {(correct_train/total_train):.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {(correct_val/total_val):.4f}')
-        torch.save(model.state_dict(), 'final_model.pth') ## 이름 겹치지 않게 하기 덮어씌워지면 이제 지옥
+            
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                patience_counter = 0
+                best_model_state = model.state_dict() # model.state_dict()가 현재 모델의 각 파라미터의 가중치를 저장하고 있는 것을 의미함.
+            else:
+                patience_counter += 1
+                if patience_counter >= patience:
+                    break
+            
+            
+        torch.save(best_model_state, 'pytorch/best_model.pth') ## 이름 겹치지 않게 하기 덮어씌워지면 이제 지옥
         print('Model training completed and saved.')
 
     train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=20)
