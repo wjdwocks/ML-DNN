@@ -1,9 +1,10 @@
 # 파이토치에서의 학습 순서
 1. 데이터를 불러오고, 순서대로 전처리를 해줄 pipeline를 구축.
+	- 반드시 리스트의 형태로 만들어서, 순차적으로 처리되게 해야함.
 ex)	데이터 세트를 텐서의 형태로 바꾸고, 평균 0.5, 표준편차 0.5로 전처리를 하는 순서.
-	transform = torchvision.transforms.Compose(
+	transform = torchvision.transforms.Compose([
 		torchvision.transforms.ToTensor(),
-		torchvision.Normalize((0.5,), (0.5,))
+		torchvision.Normalize((0.5,), (0.5,)])
 
 2. 데이터 샘플(MNIST, FashionMNIST, CIFAR-10)을 훈련 세트 / 테스트 세트 들을 가져온다.(다운로드)
 ex)	FashionMNIST의 경우
@@ -34,7 +35,7 @@ class MyModel(nn.Module):
 		super(MyModel, self).__init__() # 이거로 부모 클래스의 생성자를 호출하여 부모 클래스의 기능을 사용할 수 있게 함. (model.train()이라던가, 등등)
 		self.flatten = nn.Flatten()
 		self. fc1 = nn.Linear(28*28, 100)
-		self.relu = nn.LeRU()
+		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(100, 10)
 		self.softmax = nn.Softmax(dim=1) # 여기서 dim=1은 axis=1처럼 뒷 차원 것을 기준으로 사용할 것임을 의미.
 	def forward(self, x): # model(inputs)를 하면 호출되는 순전파. 아레의 과정을 거쳐 학습이 진행됨.
