@@ -55,25 +55,25 @@ ex)	optimizer = torch.optim.Adam(model.parameters(), lr=0.001) # 모델의 학�
 	: 학습을 어떻게 수행할 것인지를 함수로 만들어서 이 함수에 따라 학습이 진행되도록 함.
 ex)	
     def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs = 50):
-        for epoch in range(num_epochs):
-            model.train() 
-            train_loss = 0
-            correct_train = 0
-            total_train = 0
-            correct_val = 0
-            total_val = 0
-            for inputs, targets in train_loader:
-                optimizer.zero_grad() 
-                outputs = model(inputs) 
-                loss = criterion(outputs, targets) 
-                loss.backward()  
-                optimizer.step() 
-                train_loss += loss.item()
-                _, predicted = torch.max(outputs, dim=1) 
-                correct_train += (predicted == targets).sum().item() 
-                total_train += targets.size(dim=0) 
+        for epoch in range(num_epochs): # 각 에포크마다 아레를 반복한다.
+            model.train()  # 모델을 train()모드로 변환
+            train_loss = 0 # 이번 에포크에서 계산할 손실값을 0으로 초기화함.
+            correct_train = 0 # 학습 데이터 중 맞춘 것의 개수 초기화
+            total_train = 0 # 학습 데이터의 총 개수 초기화
+            correct_val = 0 # 검증 데이터 중 맞춘 개수 초기화
+            total_val = 0 # 검증 데이터의 총 개수 초기화
+            for inputs, targets in train_loader: # train_loader에 배치사이즈만큼 나누어져 들어가있음.
+                optimizer.zero_grad() # 이전 배치에서 계산된 기울기가 현재에 영향을 미치지 않도록 함.
+                outputs = model(inputs) # 순전파(Forward Pass)로 모델의 예측값을 계산함.
+                loss = criterion(outputs, targets) # 예측값과 정답 간의 손실을 계산.
+                loss.backward() # 역전파(Backward) 계산한 손실을 기준으로 각 파라미터의 기울기를 계산한다.
+                optimizer.step() # 계산한 파라미터의 기울기를 기반으로 모델을 파라미터를 업데이트함.
+                train_loss += loss.item() # 이번 batch에서의 손실값을 누적해서 더해줌.
+                _, predicted = torch.max(outputs, dim=1) # 최종적으로 softmax를 통해 나온 데이터 하나(1, 10)일텐데, 중 가장 큰 (값, index)를 받아서 predicted에 index를 받음.
+                correct_train += (predicted == targets).sum().item() # 예측한 index와 정답을 비교해 맞으면 .item()으로 자료형으로 바꿔서 더해줌.
+                total_train += targets.size(dim=0) # targets는 (배치 사이즈, 1)의 크기일텐데 그러니까 이걸 데이터 개수만큼 더해준것임.
             
-            model.eval()
+            model.eval() # 검증을 하는 과정은 위와 동일함.
             val_loss =  0
             with torch.no_grad():
                 for inputs, targets in val_loader:
@@ -85,11 +85,11 @@ ex)
                     correct_val = correct_val + (predicted == targets).sum().item()
                     total_val += targets.size(dim=0)
                     
-            train_loss /= len(train_loader)
+            train_loss /= len(train_loader) # 검증 세트와 훈련 세트의 개수가 다르니, 개수로 나눠줘서 평균 손실값을 계산하는것임.
             val_loss /= len(val_loader)
             
             
-            print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {(correct_train/total_train):.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {(correct_val/total_val):.4f}')
+            print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {(correct_train/total_train):.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {(correct_val/total_val):.4f}') # 출력을 위한 
         torch.save(model.state_dict(), 'final_model.pth')
 
 
