@@ -78,7 +78,7 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, epochs, l
             patience += 1
             if patience >= max_patience:
                 break
-    torch.save(best_model, f'MNIST_adam_relu_best_CE_{lr}.pth')
+    torch.save(best_model, f'pytorch/MNIST_adam_relu_best_CE_{lr}.pth')
     return best_model
 
 
@@ -145,7 +145,7 @@ if __name__ == '__main__':
         optimizer = torch.optim.Adam(model.parameters(), lr, betas=(0.9, 0.999), eps=1e-8, weight_decay=0)
         criterion = nn.CrossEntropyLoss()
         
-        best_model[i] = train_model(model, train_loader, val_loader, optimizer, criterion, epochs=20, lr = lr, max_patience=2)
+        best_model.append(train_model(model, train_loader, val_loader, optimizer, criterion, epochs=20, lr = lr, max_patience=2))
         new_model = myModel()
         new_model.load_state_dict(best_model[i])
         acc, loss = evaluate(new_model, test_loader, criterion)
@@ -160,4 +160,4 @@ if __name__ == '__main__':
             best_index = i
     
     print(f'best learn_rate = {best_lr}, 그 때의 Accuracy : {best_accuracy}')
-    torch.save(best_model[best_index], f'best_lr_adam_relu_CE_{best_lr}.pth')
+    torch.save(best_model[best_index], f'pytorch/best_lr_adam_relu_CE_{best_lr}.pth')
