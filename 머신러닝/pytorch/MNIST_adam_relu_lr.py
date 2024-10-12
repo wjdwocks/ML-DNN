@@ -65,7 +65,10 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, epochs, l
                 val_correct += (predicted == targets).sum().item()
                 val_total += targets.size(dim=0)
         
-        print(f'Train Accuracy : {(train_correct/train_total):.3f}, Val Accuracy : {(val_correct/val_total):.3f}, Train loss : {(train_loss/train_total):.3f}, Val loss : {(val_loss/val_total):.3f}')
+        val_loss /= len(val_loader)
+        train_loss /= len(train_loader)
+        
+        print(f'{epoch+1}s epoch : Train Accuracy : {(train_correct/train_total):.4f}, Val Accuracy : {(val_correct/val_total):.4f}, Train loss : {(train_loss):.4f}, Val loss : {(val_loss):.4f}')
         
         if val_loss < min_val_loss:
             patience = 0
