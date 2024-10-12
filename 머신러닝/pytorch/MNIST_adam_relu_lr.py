@@ -143,7 +143,7 @@ if __name__ == '__main__':
     for i, lr in enumerate(lr_list): # enum은 (index, value)쌍으로 반환.
         model = myModel()
         optimizer = torch.optim.Adam(model.parameters(), lr, betas=(0.9, 0.999), eps=1e-8, weight_decay=0)
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.CrossEntropyLoss()   
         
         best_model.append(train_model(model, train_loader, val_loader, optimizer, criterion, epochs=20, lr = lr, max_patience=2))
         new_model = myModel()
@@ -153,7 +153,7 @@ if __name__ == '__main__':
         accuracy_list.append(acc)
         loss_list.append(loss)
     
-    for i, (acc, lr) in enumerate(zip(best_accuracy, best_lr)):
+    for i, (acc, lr) in enumerate(zip(accuracy_list, lr_list)):
         if acc > best_accuracy:
             best_accuracy = acc
             best_lr = lr
