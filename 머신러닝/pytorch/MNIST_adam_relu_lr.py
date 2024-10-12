@@ -145,7 +145,7 @@ if __name__ == '__main__':
         optimizer = torch.optim.Adam(model.parameters(), lr, betas=(0.9, 0.999), eps=1e-8, weight_decay=0)
         criterion = nn.CrossEntropyLoss()
         
-        best_model[i] = train_model(model, train_loader, val_loader, optimizer, criterion, epochs=50, lr = lr, max_patience=2)
+        best_model[i] = train_model(model, train_loader, val_loader, optimizer, criterion, epochs=20, lr = lr, max_patience=2)
         new_model = myModel()
         new_model.load_state_dict(best_model[i])
         acc, loss = evaluate(new_model, test_loader, criterion)
