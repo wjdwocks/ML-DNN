@@ -160,4 +160,6 @@ if __name__ == '__main__':
             best_index = i
     
     print(f'best learn_rate = {best_lr}, 그 때의 Accuracy : {best_accuracy}')
-    torch.save(best_model[best_index], f'pytorch/best_lr_adam_relu_CE_{best_lr}.pth')
+    torch.save(best_model[best_index], f'pytorch/best_lr_adam_relu_CE_{best_lr}.pth') # lr = 0.0001일 때 가장 높은 val_accuracy를 보여줌.
+    # 근데 당연한게 더 오래 학습을
+    # 
