@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 import torchvision
 from torch.utils.data import DataLoader, random_split
+import matplotlib.pyplot as plt
 
 class model(nn.Module):
     def __init__(self):
@@ -66,6 +67,7 @@ if __name__ == '__main__':
     
     criterion = nn.CrossEntropyLoss() # criterion은 손실함수의 판단 기준을 의미함.
     optimizer = torch.optim.Adam(lr=0.0005, params=model.parameters()) # params를 넘겨주는 이유는 순전파 진행 시 생기는 가중치들의 파라미터들의 기울기를 역전파 때 얻고, 업데이트 해주기 위함임.
+    losses = []
     
     def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=20, patience=2):
         patience_counter = 0
@@ -102,6 +104,7 @@ if __name__ == '__main__':
                     total_val += targets.size(dim=0)
             train_loss /= len(train_loader)
             val_loss /= len(val_loader)
+            losses.append(val_loss)
             
             print(f'{epoch+1}th - Train_accuracy : {(correct_train/total_train):.3f}, Train_loss : {train_loss:.3f}, Validation Accuracy : {(correct_val/total_val):.3f}, Validation loss : {val_loss:.3f}')
             
@@ -116,3 +119,9 @@ if __name__ == '__main__':
         torch.save(best_model, 'pytorch/MNIST_relu_adam_CE.pth')
     train_model(model, train_loader, val_loader, criterion, optimizer, 20, 2)
     
+        
+    plt.plot(range(1, len(losses)+1), losses)
+    plt.xlabel('epoch')
+    plt.ylabel('Validation Loss')
+    plt.title('Validation Loss in Each Epochs')
+    plt.show()

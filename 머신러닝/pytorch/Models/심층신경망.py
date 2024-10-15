@@ -3,6 +3,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, random_split
+import matplotlib.pyplot as plt
 
 class myModel(nn.Module):
     def __init__(self):
@@ -73,8 +74,10 @@ if __name__ == '__main__':
     model = myModel()
     
     ## result
-    optimizer = torch.optim.RMSprop(model.parameters(), lr=0.001, momentum=0.9)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
+    
+    losses = []
     
     def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs = 50, patience = 2):
         # best_model_state = None # None으로 놓아도 되는데 공부중이니까 아레와 같이 놓자
@@ -117,7 +120,7 @@ if __name__ == '__main__':
                     
             train_loss /= len(train_loader)
             val_loss /= len(val_loader)
-            
+            losses.append(val_loss)
             
             print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {(correct_train/total_train):.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {(correct_val/total_val):.4f}')
             
@@ -131,23 +134,14 @@ if __name__ == '__main__':
                     break
             
             
-        torch.save(best_model_state, 'pytorch/MNIST_best_model_RMSprop.pth') ## 이름 겹치지 않게 하기 덮어씌워지면 이제 지옥
+        torch.save(best_model_state, 'pytorch/best_model.pth') ## 이름 겹치지 않게 하기 덮어씌워지면 이제 지옥
         print('Model training completed and saved.')
 
     train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=20)
     
-    test_correct = 0
-    test_total = 0
-    test_loss = 0
-    model.eval()
-    with torch.no_grad():
-        for inputs, targets in test_loader:
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
-            test_loss += loss.item()
-            
-            _, predicted = torch.max(outputs, dim=1)
-            test_correct += (predicted == targets).sum().item()
-            test_total += targets.size(dim=0)
-            
-    print(f'Test Acc = {(test_correct/test_total):.3f}, Test loss = {(test_loss / len(test_loader)):.3f}') # Test Acc = 0.858, Test loss = 0.420
+        
+    plt.plot(range(1, len(losses)+1), losses)
+    plt.xlabel('epoch')
+    plt.ylabel('Validation Loss')
+    plt.title('Validation Loss in Each Epochs')
+    plt.show()

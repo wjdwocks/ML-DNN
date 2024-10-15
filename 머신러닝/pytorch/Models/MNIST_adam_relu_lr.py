@@ -3,7 +3,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import random_split, DataLoader
-
+import matplotlib.pyplot as plt
 
 class myModel(nn.Module):
     def __init__(self):
@@ -67,6 +67,7 @@ def train_model(model, train_loader, val_loader, optimizer, criterion, epochs, l
         
         val_loss /= len(val_loader)
         train_loss /= len(train_loader)
+        losses.append(val_loss)
         
         print(f'{epoch+1}s epoch : Train Accuracy : {(train_correct/train_total):.4f}, Val Accuracy : {(val_correct/val_total):.4f}, Train loss : {(train_loss):.4f}, Val loss : {(val_loss):.4f}')
         
@@ -140,6 +141,7 @@ if __name__ == '__main__':
     best_index = 0
     best_model = []
     
+    losses = []
     for i, lr in enumerate(lr_list): # enum은 (index, value)쌍으로 반환.
         model = myModel()
         optimizer = torch.optim.Adam(model.parameters(), lr, betas=(0.9, 0.999), eps=1e-8, weight_decay=0)
@@ -163,3 +165,10 @@ if __name__ == '__main__':
     torch.save(best_model[best_index], f'pytorch/best_lr_adam_relu_CE_{best_lr}.pth') # lr = 0.0001일 때 가장 높은 val_accuracy를 보여줌.
     # 근데 당연한게 더 오래 학습을
     # 
+    
+        
+    plt.plot(range(1, len(losses)+1), losses)
+    plt.xlabel('epoch')
+    plt.ylabel('Validation Loss')
+    plt.title('Validation Loss in Each Epochs')
+    plt.show()

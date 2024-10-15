@@ -3,6 +3,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, random_split
+import matplotlib.pyplot as plt
 
 class myModel(nn.Module):
     def __init__(self):
@@ -76,6 +77,8 @@ if __name__ == '__main__':
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
     
+    losses = []
+    
     def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs = 50, patience = 2):
         # best_model_state = None # None으로 놓아도 되는데 공부중이니까 아레와 같이 놓자
         best_model_state = model.state_dict()
@@ -117,7 +120,7 @@ if __name__ == '__main__':
                     
             train_loss /= len(train_loader)
             val_loss /= len(val_loader)
-            
+            losses.append(val_loss)
             
             print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {(correct_train/total_train):.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {(correct_val/total_val):.4f}')
             
@@ -151,3 +154,9 @@ if __name__ == '__main__':
             test_total += targets.size(dim=0)
             
     print(f'Test Acc = {(test_correct/test_total):.3f}, Test loss = {(test_loss / len(test_loader)):.3f}') # Test Acc = 0.874, Test loss = 0.352
+    
+    plt.plot(range(1, len(losses)+1), losses)
+    plt.xlabel('epoch')
+    plt.ylabel('Validation Loss')
+    plt.title('Validation Loss in Each Epochs')
+    plt.show()
