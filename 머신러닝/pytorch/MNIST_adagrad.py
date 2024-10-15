@@ -131,7 +131,7 @@ if __name__ == '__main__':
                     break
             
             
-        torch.save(best_model_state, 'pytorch/best_model.pth') ## 이름 겹치지 않게 하기 덮어씌워지면 이제 지옥
+        torch.save(best_model_state, 'pytorch/MNIST_best_model_Adagrad.pth') ## 이름 겹치지 않게 하기 덮어씌워지면 이제 지옥
         print('Model training completed and saved.')
 
     train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=20)
@@ -150,4 +150,4 @@ if __name__ == '__main__':
             test_correct += (predicted == targets).sum().item()
             test_total += targets.size(dim=0)
             
-    print(f'Test Acc = {(test_correct/test_total):.3f}, Test loss = {(test_loss / len(test_loader)):.3f}')
+    print(f'Test Acc = {(test_correct/test_total):.3f}, Test loss = {(test_loss / len(test_loader)):.3f}') # 0.839의 acc, 0.452의 loss
