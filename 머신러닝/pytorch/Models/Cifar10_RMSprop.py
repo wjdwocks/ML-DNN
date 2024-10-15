@@ -72,7 +72,7 @@ if __name__ == '__main__':
     val_loader = DataLoader(val_datasets, batch_size=64, shuffle=True)
     
     model = myModel()
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=0.0001)
+    optimizer = torch.optim.RMSprop(params=model.parameters(), lr=0.0001, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
     losses = []
     
@@ -156,5 +156,5 @@ if __name__ == '__main__':
     plt.plot(range(1, len(losses)+1), losses)
     plt.xlabel('epoch')
     plt.ylabel('Validation Loss')
-    plt.title('Cifar-10 Validation Loss in Adam')
+    plt.title('Cifar-10 Validation Loss in RMSprop')
     plt.show()

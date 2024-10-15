@@ -165,10 +165,4 @@ if __name__ == '__main__':
     torch.save(best_model[best_index], f'pytorch/best_lr_adam_relu_CE_{best_lr}.pth') # lr = 0.0001일 때 가장 높은 val_accuracy를 보여줌.
     # 근데 당연한게 더 오래 학습을
     # 
-    
-        
-    plt.plot(range(1, len(losses)+1), losses)
-    plt.xlabel('epoch')
-    plt.ylabel('Validation Loss')
-    plt.title('Validation Loss in Each Epochs')
-    plt.show()
+    # 각 learn_rate에 대한 epoch 그림을 그려야함.
