@@ -71,7 +71,7 @@ if __name__ == '__main__':
     val_loader = DataLoader(val_datasets, batch_size=64, shuffle=True)
     
     model = myModel()
-    optimizer = torch.optim.Adam(params=model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=0.0001)
     criterion = nn.CrossEntropyLoss()
     
     def train_model(model, train_loader, test_loader, val_loader, optimizer, criterion, epochs, max_patience):
