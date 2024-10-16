@@ -142,14 +142,14 @@ if __name__ == '__main__':
     train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=20)
     
     
-    fig, ax = plt.subplots(2, 1)
+    fig, ax = plt.subplots(1, 2)
     
     ax[0].plot(range(1, len(losses)+1), losses)
-    ax[0].xlabel('epoch')
-    ax[0].ylabel('Validation Loss')
+    ax[0].set_xlabel('epoch')
+    ax[0].set_ylabel('Validation Loss')
     ax[0].set_title('Fashion_MNIST Adam lr=0.001')
     ax[1].plot(range(1, len(losses)+1), accuracys)
-    ax[1].xlabel('epoch')
-    ax[1].ylabel('Validation Acc')
+    ax[1].set_xlabel('epoch')
+    ax[1].set_ylabel('Validation Acc')
     ax[1].set_title('Fashion_MNIST Adam lr=0.001')
     plt.show()

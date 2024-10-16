@@ -12,7 +12,7 @@ ex)	FashionMNIST의 경우
 		root='./fashionMNIST',
 		train=True,
 		download=True,
-		transform=transform
+		transform=transform)
 
 3. 학습 데이터 세트를 검증 데이터 세트로 나눔.
 ex)	검증 세트를 20%만 떼준다면
