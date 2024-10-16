@@ -78,6 +78,7 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
     
     losses = []
+    accuracys = []
     
     def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs = 50, patience = 2):
         # best_model_state = None # None으로 놓아도 되는데 공부중이니까 아레와 같이 놓자
@@ -121,6 +122,7 @@ if __name__ == '__main__':
             train_loss /= len(train_loader)
             val_loss /= len(val_loader)
             losses.append(val_loss)
+            accuracys.append(correct_val/total_val)
             
             print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {(correct_train/total_train):.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {(correct_val/total_val):.4f}')
             
@@ -139,9 +141,15 @@ if __name__ == '__main__':
 
     train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=20)
     
-        
-    plt.plot(range(1, len(losses)+1), losses)
-    plt.xlabel('epoch')
-    plt.ylabel('Validation Loss')
-    plt.title('Validation Loss in Each Epochs')
+    
+    fig, ax = plt.subplots(2, 1)
+    
+    ax[0].plot(range(1, len(losses)+1), losses)
+    ax[0].xlabel('epoch')
+    ax[0].ylabel('Validation Loss')
+    ax[0].set_title('Fashion_MNIST Adam lr=0.001')
+    ax[1].plot(range(1, len(losses)+1), accuracys)
+    ax[1].xlabel('epoch')
+    ax[1].ylabel('Validation Acc')
+    ax[1].set_title('Fashion_MNIST Adam lr=0.001')
     plt.show()
