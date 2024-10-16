@@ -77,6 +77,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adagrad(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
     losses = []
+    accuracys = []
     def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs = 50, patience = 2):
         # best_model_state = None # None으로 놓아도 되는데 공부중이니까 아레와 같이 놓자
         best_model_state = model.state_dict()
@@ -119,7 +120,7 @@ if __name__ == '__main__':
             train_loss /= len(train_loader)
             val_loss /= len(val_loader)
             losses.append(val_loss)
-            
+            accuracys.append(correct_val / total_val)
             print(f'Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss:.4f}, Train Accuracy: {(correct_train/total_train):.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {(correct_val/total_val):.4f}')
             
             if val_loss < best_val_loss:
@@ -153,9 +154,14 @@ if __name__ == '__main__':
             
     print(f'Test Acc = {(test_correct/test_total):.3f}, Test loss = {(test_loss / len(test_loader)):.3f}') # 0.839의 acc, 0.452의 loss
     
-        
-    plt.plot(range(1, len(losses)+1), losses)
-    plt.xlabel('epoch')
-    plt.ylabel('Validation Loss')
-    plt.title('Validation Loss in Each Epochs')
+    fig, ax = plt.subplots(1, 2)
+    
+    ax[0].plot(range(1, len(losses)+1), losses)
+    ax[0].set_xlabel('epoch')
+    ax[0].set_ylabel('Validation Loss')
+    ax[0].set_title('MNIST Adagrad lr=0.001')
+    ax[1].plot(range(1, len(losses)+1), accuracys)
+    ax[1].set_xlabel('epoch')
+    ax[1].set_ylabel('Validation Acc')
+    ax[1].set_title('MNIST Adagrad lr=0.001')
     plt.show()

@@ -72,10 +72,10 @@ if __name__ == '__main__':
     val_loader = DataLoader(val_datasets, batch_size=64, shuffle=True)
     
     model = myModel()
-    optimizer = torch.optim.Adagrad(params=model.parameters(), lr=0.0001)
+    optimizer = torch.optim.Adagrad(params=model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
     losses = []
-    
+    accuracys = []
     def train_model(model, train_loader, test_loader, val_loader, optimizer, criterion, epochs, max_patience):
         patience = 0
         best_model = model.state_dict()
@@ -118,7 +118,7 @@ if __name__ == '__main__':
             val_accuracy = (val_correct / val_total)
             val_loss /= len(val_loader)
             losses.append(val_loss)
-            
+            accuracys.append(val_accuracy)
             print(f'{epoch+1}s : train_accuracy - {train_accuracy:.3f} train_loss - {train_loss:.3f}, val_accuracy - {val_accuracy:.3f}, val_loss - {val_loss:.3f}')
             if val_loss < best_val_loss :
                 best_val_loss = val_loss
@@ -153,8 +153,14 @@ if __name__ == '__main__':
                 
     
         
-    plt.plot(range(1, len(losses)+1), losses)
-    plt.xlabel('epoch')
-    plt.ylabel('Validation Loss')
-    plt.title('Cifar-10 Validation Loss in Adagrad')
+    fig, ax = plt.subplots(1, 2)
+    
+    ax[0].plot(range(1, len(losses)+1), losses)
+    ax[0].set_xlabel('epoch')
+    ax[0].set_ylabel('Validation Loss')
+    ax[0].set_title('Cifar-10 Adagrad lr=0.001')
+    ax[1].plot(range(1, len(losses)+1), accuracys)
+    ax[1].set_xlabel('epoch')
+    ax[1].set_ylabel('Validation Acc')
+    ax[1].set_title('Cifar-10 Adagrad lr=0.001')
     plt.show()
