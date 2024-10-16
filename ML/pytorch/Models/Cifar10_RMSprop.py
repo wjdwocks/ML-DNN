@@ -131,7 +131,7 @@ if __name__ == '__main__':
                 if patience >= max_patience:
                     break
         
-        torch.save(best_model, 'ML/pytorch/Cifar-10_best_model.pth')
+        torch.save(best_model, 'ML/pytorch/Cifar-10_RMSprop.pth')
     train_model(model, train_loader, test_loader, val_loader, optimizer, criterion, epochs=20, max_patience=2)
     
     
