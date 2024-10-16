@@ -49,13 +49,13 @@ if __name__ == '__main__':
     
     # Fashion_Mnist 훈련 및 테스트 데이터셋 불러오기.
     train_dataset = torchvision.datasets.FashionMNIST( # FashionMNIST를 불러올거
-        root='./fashionMNIST', # 저장 위치 : ./data (여기 폴더의 data라는 파일로)
+        root='ML/pytorch/Datasets/fashionMNIST', # 저장 위치 : ./data (여기 폴더의 data라는 파일로)
         train=True, # True면 Train Set으로 False면 Test Set임.
         download=True,  # 다운로드 받을건지, 이미 있으면 False로 하자.
         transform=transform # 데이터 선처리
     )
     test_dataset = torchvision.datasets.FashionMNIST(
-        root='./fashionMNIST',
+        root='ML/pytorch/Datasets/fashionMNIST',
         train=False,
         download=False,
         transform=transform

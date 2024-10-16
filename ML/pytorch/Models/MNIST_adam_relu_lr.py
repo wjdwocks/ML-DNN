@@ -110,13 +110,13 @@ if __name__ == '__main__':
         transforms.Normalize(mean=(0.5,), std=(0.5,))
     ])
     train_datasets = torchvision.datasets.MNIST(
-        root='pytorch/MNIST',
+        root='ML/pytorch/Datasets/MNIST',
         train=True,
         transform=pipeline,
         download=True
     )
     test_datasets = torchvision.datasets.MNIST(
-        root='pytorch/MNIST',
+        root='ML/pytorch/Datasets/MNIST',
         train=False,
         transform=pipeline,
         download=True

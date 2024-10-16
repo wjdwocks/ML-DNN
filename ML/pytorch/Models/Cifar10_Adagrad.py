@@ -49,14 +49,14 @@ if __name__ == '__main__':
     ])
     
     train_datasets = torchvision.datasets.CIFAR10(
-        root='./pytorch/CIFAR10',
+        root='ML/pytorch/Datasets/CIFAR10',
         train=True,
         transform=pipeline,
         download=True
     )
     
     test_datasets = torchvision.datasets.CIFAR10(
-        root='./pytorch/CIFAR10',
+        root='ML/pytorch/Datasets/CIFAR10',
         train=False,
         transform=pipeline,
         download=True
@@ -129,7 +129,7 @@ if __name__ == '__main__':
                 if patience >= max_patience:
                     break
         
-        torch.save(best_model, './pytorch/Cifar-10_best_model.pth')
+        torch.save(best_model, 'ML/pytorch/Cifar-10_best_model.pth')
     train_model(model, train_loader, test_loader, val_loader, optimizer, criterion, epochs=20, max_patience=2)
     
     

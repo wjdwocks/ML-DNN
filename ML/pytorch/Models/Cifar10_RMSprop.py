@@ -49,14 +49,14 @@ if __name__ == '__main__':
     ])
     
     train_datasets = torchvision.datasets.CIFAR10(
-        root='./pytorch/CIFAR10',
+        root='ML/pytorch/Datasets/CIFAR10',
         train=True,
         transform=pipeline,
         download=True
     )
     
     test_datasets = torchvision.datasets.CIFAR10(
-        root='./pytorch/CIFAR10',
+        root='ML/pytorch/Datasets/CIFAR10',
         train=False,
         transform=pipeline,
         download=True

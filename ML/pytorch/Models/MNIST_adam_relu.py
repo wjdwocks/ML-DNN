@@ -41,13 +41,13 @@ if __name__ == '__main__':
     # mean = (0.5,)와 mean = (0.5)는 다른게, (0.5,) 는 1개의 원소를 가진 튜플을 의미하고, (0.5)는 실수임.
     
     train_datasets = torchvision.datasets.MNIST( # 각 데이터는 ((img, label), ... ) 의 형태로 있고, 각각이 60000개가 있다.
-        root='./pytorch/MNIST',
+        root='ML/pytorch/Datasets/MNIST',
         train=True,
         download=True,
         transform=pipeline
     )
     test_datasets = torchvision.datasets.MNIST(
-        root='./pytorch/MNIST',
+        root='ML/pytorch/Datasets/MNIST',
         train=False,
         download=True,
         transform=pipeline        
