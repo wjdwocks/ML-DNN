@@ -116,7 +116,7 @@ if __name__ == '__main__':
                 patience_counter += 1
                 if patience_counter >= patience:
                      break
-        torch.save(best_model, 'pytorch/MNIST_relu_adam_CE.pth')
+        torch.save(best_model, 'ML/pytorch/MNIST_relu_adam_CE.pth')
     train_model(model, train_loader, val_loader, criterion, optimizer, 20, 2)
     
         

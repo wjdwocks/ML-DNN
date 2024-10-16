@@ -133,7 +133,7 @@ if __name__ == '__main__':
                     break
             
             
-        torch.save(best_model_state, 'pytorch/MNIST_best_model_RMSprop.pth') ## 이름 겹치지 않게 하기 덮어씌워지면 이제 지옥
+        torch.save(best_model_state, 'ML/pytorch/MNIST_best_model_RMSprop.pth') ## 이름 겹치지 않게 하기 덮어씌워지면 이제 지옥
         print('Model training completed and saved.')
 
     train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs=20)
