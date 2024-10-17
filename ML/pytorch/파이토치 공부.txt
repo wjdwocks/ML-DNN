@@ -219,11 +219,6 @@ ex)	이런 순서로 진행됨.
 		- 모델이 예측한 클래스 확률과 실제 정답 간의 차이를 측정한다.
 		- 정답에 해당하는 클래스의 확률이 낮을수록 손실값이 커진다.
 		// 얘가 softmax로 각 클래스에 대한 확률을 뱉는데, 실제 정답인 클래스에 대한 확률이 낮을수록 loss가 커진다는 것 같다.
-
-
-
-
-
 	2. Negative Log Likelihood Loss(NLLLoss)
 		: CrossEntropyLoss와 유사하지만, 출력에 softmax를 적용하지 않고 로그 확률을 사용하는 경우 적합.
 	3. Mean Squared Error Loss (MSELoss) 
