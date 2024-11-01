@@ -8,7 +8,16 @@ import matplotlib.pyplot as plt
 class myModel(nn.Module):
     def __init__(self):
         super(myModel, self).__init__()
-        self.conv1 = nn.Conv2d(3, 15, kernel_size=3, padding='same') # 3채널 이미지 데이터를 3x3커널 15개와? 합성곱 연산을 수행하여 out_channel을 15로 만듦.
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding='same')
+        self.maxpool1 = nn.MaxPool2d((3,3), 2)
+        self.ResidualBlock = nn.Sequential([
+            nn.Conv2d(64, 64, (3,3), 1, padding='same'),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, (3,3), 1, 'same')
+            
+        ])
+        
         # samepadding으로 나온 특성맵도 32*32 크기를 유지하도록 함.
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
         self.relu = nn.ReLU()
