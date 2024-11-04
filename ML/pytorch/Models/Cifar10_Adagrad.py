@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 class myModel(nn.Module):
     def __init__(self):
         super(myModel, self).__init__()
-        self.conv1 = nn.Conv2d(3, 15, kernel_size=3, padding='same') # 3채널 이미지 데이터를 3x3커널 15개와? 합성곱 연산을 수행하여 out_channel을 15로 만듦.
-        # samepadding으로 나온 특성맵도 32*32 크기를 유지하도록 함.
+        self.conv1 = nn.Conv2d(3, 15, kernel_size=3, padding='same')
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
         self.relu = nn.ReLU()
         
@@ -39,13 +38,13 @@ class myModel(nn.Module):
         
         x = self.fc2(x)
         return x
-    
-        
 
 if __name__ == '__main__':
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     pipeline = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)) # 각 채널(R, G, B)의 픽셀값을 mean=0.5, std=0.5로 정규화한다.
+        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
     ])
     
     train_datasets = torchvision.datasets.CIFAR10(
@@ -71,11 +70,12 @@ if __name__ == '__main__':
     test_loader = DataLoader(test_datasets, batch_size=64, shuffle=True)
     val_loader = DataLoader(val_datasets, batch_size=64, shuffle=True)
     
-    model = myModel()
+    model = myModel().to(device)  # 모델을 GPU로 이동
     optimizer = torch.optim.Adagrad(params=model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
     losses = []
     accuracys = []
+
     def train_model(model, train_loader, test_loader, val_loader, optimizer, criterion, epochs, max_patience):
         patience = 0
         best_model = model.state_dict()
@@ -86,6 +86,7 @@ if __name__ == '__main__':
             train_correct = 0
             train_total = 0
             for inputs, targets in train_loader:
+                inputs, targets = inputs.to(device), targets.to(device)  # 데이터를 GPU로 이동
                 optimizer.zero_grad()
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
@@ -107,6 +108,7 @@ if __name__ == '__main__':
             
             with torch.no_grad():
                 for inputs, targets in val_loader:
+                    inputs, targets = inputs.to(device), targets.to(device)  # 데이터를 GPU로 이동
                     outputs = model(inputs)
                     loss = criterion(outputs, targets)
                     val_loss += loss.item()
@@ -120,19 +122,19 @@ if __name__ == '__main__':
             losses.append(val_loss)
             accuracys.append(val_accuracy)
             print(f'{epoch+1}s : train_accuracy - {train_accuracy:.3f} train_loss - {train_loss:.3f}, val_accuracy - {val_accuracy:.3f}, val_loss - {val_loss:.3f}')
-            if val_loss < best_val_loss :
+            if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 patience = 0
                 best_model = model.state_dict()
-            else :
+            else:
                 patience += 1
                 if patience >= max_patience:
                     break
         
         torch.save(best_model, 'ML/pytorch/Cifar-10_Adagrad.pth')
+    
     train_model(model, train_loader, test_loader, val_loader, optimizer, criterion, epochs=20, max_patience=2)
-    
-    
+
     test_loss = 0
     test_correct = 0
     test_total = 0
@@ -140,6 +142,7 @@ if __name__ == '__main__':
     
     with torch.no_grad():
         for inputs, targets in test_loader:
+            inputs, targets = inputs.to(device), targets.to(device)  # 데이터를 GPU로 이동
             outputs = model(inputs)
             loss = criterion(outputs, targets)
             test_loss += loss.item()
@@ -149,10 +152,7 @@ if __name__ == '__main__':
             test_total += targets.size(dim=0)
             
     print(f'Test Set의 Accuracy : {(test_correct/test_total):.3f}, Test Set의 loss : {(test_loss / len(test_loader)):.3f}')
-            
-                
-    
-        
+
     fig, ax = plt.subplots(1, 2)
     
     ax[0].plot(range(1, len(losses)+1), losses)
