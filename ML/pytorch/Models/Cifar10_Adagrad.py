@@ -5,20 +5,18 @@ from torch.utils.data import DataLoader, random_split
 import torchvision
 import matplotlib.pyplot as plt
 
+
+    
 class myModel(nn.Module):
     def __init__(self):
         super(myModel, self).__init__()
         self.conv1 = nn.Conv2d(3, 15, kernel_size=3, padding='same')
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
         self.relu = nn.ReLU()
-        
         self.conv2 = nn.Conv2d(15, 45, kernel_size=3, padding='same')
-        
         self.flatten = nn.Flatten()
-        
         self.fc1 = nn.Linear(8*8*45, 100)
         self.dropout = nn.Dropout(0.3)
-        
         self.fc2 = nn.Linear(100, 10)
         
     def forward(self, x):
