@@ -78,9 +78,13 @@ class Resnet18(nn.Module):
 
         # 각 Residual Stage를 건넘
         out = self.stage1(out) # 32, 32
+        # print(out.shape)
         out = self.stage2(out) # 16, 16
+        # print(out.shape)
         out = self.stage3(out) # 8, 8
+        # print(out.shape)
         out = self.stage4(out) # 4, 4
+        # print(out.shape)
 
         # 
         out = self.avgpool(out)
@@ -92,7 +96,7 @@ class Resnet18(nn.Module):
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    pipeline = transforms([
+    pipeline = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
     ])
@@ -121,7 +125,7 @@ if __name__ == '__main__':
     val_loader = DataLoader(val_datasets, batch_size=64, shuffle=True)
     
     model = Resnet18().to(device)  # 모델을 GPU로 이동
-    optimizer = torch.optim.Adagrad(params=model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=0.0005)
     criterion = nn.CrossEntropyLoss()
     losses = []
     accuracys = []
@@ -181,9 +185,9 @@ if __name__ == '__main__':
                 if patience >= max_patience:
                     break
         
-        torch.save(best_model, 'ML/pytorch/Cifar-10_Adagrad.pth')
+        torch.save(best_model, 'ML/pytorch/Cifar-10_Resnet18_Adam.pth')
 
-        train_model(model, train_loader, test_loader, val_loader, optimizer, criterion, epochs=20, max_patience=2)
+    train_model(model, train_loader, test_loader, val_loader, optimizer, criterion, epochs=20, max_patience=2)
 
     test_loss = 0
     test_correct = 0
@@ -208,9 +212,9 @@ if __name__ == '__main__':
     ax[0].plot(range(1, len(losses)+1), losses)
     ax[0].set_xlabel('epoch')
     ax[0].set_ylabel('Validation Loss')
-    ax[0].set_title('Cifar-10 Adagrad lr=0.001')
+    ax[0].set_title('Cifar-10 Resnet18 Adam lr=0.0005')
     ax[1].plot(range(1, len(losses)+1), accuracys)
     ax[1].set_xlabel('epoch')
     ax[1].set_ylabel('Validation Acc')
-    ax[1].set_title('Cifar-10 Adagrad lr=0.001')
+    ax[1].set_title('Cifar-10 Resnet18 Adam lr=0.0005')
     plt.show()
