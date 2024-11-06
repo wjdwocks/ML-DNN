@@ -9,14 +9,8 @@ class myModel(nn.Module):
     def __init__(self):
         super(myModel, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding='same')
-        self.maxpool1 = nn.MaxPool2d((3,3), 2)
-        self.ResidualBlock = nn.Sequential([
-            nn.Conv2d(64, 64, (3,3), 1, padding='same'),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, (3,3), 1, 'same')
-        ])
-        
+        self.maxpool1 = nn.MaxPool2d((3,3), 2) # (16, 16)
+
         self.pooling = nn.MaxPool2d(kernel_size=2, stride=2)
         self.relu = nn.ReLU()
         self.conv2 = nn.Conv2d(64, 45, kernel_size=3, padding='same')  # 입력 채널을 64로 수정
@@ -25,6 +19,16 @@ class myModel(nn.Module):
         self.fc1 = nn.Linear(8*8*45, 100)
         self.dropout = nn.Dropout(0.3)
         self.fc2 = nn.Linear(100, 10)
+    
+    def ResidualStage1(self, x):
+        self.conv1 = nn.Conv2d(64, 64, kernel_size=3, padding='same')
+        # bn
+        # relu
+        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, padding='same')
+        # bn
+        # out = out + x
+        # out = relu(out)
+        # return out
         
     def forward(self, x):
         x = self.conv1(x)
