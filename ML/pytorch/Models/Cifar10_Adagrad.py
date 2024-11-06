@@ -5,33 +5,8 @@ from torch.utils.data import DataLoader, random_split
 import torchvision
 import matplotlib.pyplot as plt
 
-class ResidualBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1):
-        super(ResidualBlock, self).__init__()
-        # 1번째 Conv Layer
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        
-        # 2번째 Conv Layer
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(out_channels)
 
-        # 입력과 출력 채널이 다를 경우 차원을 조정해줌.
-        self.shortcut = nn.Sequential()
-        if stride != 1 or in_channels != out_channels:
-            self.shortcut = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(out_channels)
-            )
-
-    def forward(self, x):
-        out = nn.functional.relu(self.bn1(self.conv1(x)))
-        out = self.bn2(self.conv2(out))
-        out += self.shortcut(x)
-        out = nn.functional.relu(out)
-        return out
-        
-
+    
 class myModel(nn.Module):
     def __init__(self):
         super(myModel, self).__init__()
