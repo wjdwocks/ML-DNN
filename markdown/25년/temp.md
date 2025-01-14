@@ -23,3 +23,10 @@
   <li> 즉, Gate 알고리즘으로 Cell State(장기기억)을 관리하고, Hidden State(단기 기억)은 그대로 또 유지하는 것이 LSTM이다. </li>
 
   ![게이트 알고리즘](https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.1.16/gate_algorithm.png)
+
+
+  ### Sequence To Sequence 알고리즘
+  <li> 기계 번역에서 큰 문제중 하나인 장기기억문제를 해결하는 것은 LSTM임. </li>
+  <li> Seq2Seq은 LSTM을 기본단위로 한다. </li>
+  <li> 기계 번역에서 두번 째 문제인 문장내의 어순과 단어 갯수의 불일치를 해결하기 위해 나온 개념인듯 하다. </li>
+  <li> Seq2Seq 모델은 입력 Sequence를 Encoder와 Decoder 구조로 처리한다. </li>
