@@ -16,6 +16,10 @@
   ![장기 의존성 문제](https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.1.16/long-term.png)
   <li> 장기 의존성 문제의 사례 : '당신의 내면의 힘을 과소평가하지 마세요' 를 번역할 때 'Don't underestimate your inner strength'로 해석이 될텐데, 마세요는 마지막이지만, Don't는 첫 번째 time step이기 때문에, 서로 의미적으로 가까운 단어이지만, Long Term dependency에 의해 학습이 잘 되지 않을 것이다. </li>
   <li> LSTM이 기존 RNN과 다른 점 : Gate Algorithm(forget gate, input gate, candidate gate, output gate) </li>
-  <li> forget gate :  </li>
+  <li> forget gate : 이전 Hidden State와 현재 입력(x)를 받아서 Forgot Gate를 통해 잊을 것을 파악한 뒤 이전 Cell State에서 잊을 정보를 지운다. </li>
+  <li> Input Gate : 이전 Hidden State와 현재 입력 x를 받아서 Input Gate를 통해 기억할 것을 파악한다. </li>
+  <li> Candidate Gate : 값을 -1 ~ 1 사이의 값으로 정규화 시키는 역할을 하며, Input Gate와 곱하여서 Cell State에 기억할 정보를 추가하도록 한다. </li>
+  <li> Output Gate : 이전 Hidden State와 현재 입력 x를 받아서 Output을 출력하고, 업데이트된 Cell State와 결합하여 다음 Hidden State를 생성하는 역할을 한다. </li>
+  <li> 즉, Gate 알고리즘으로 Cell State(장기기억)을 관리하고, Hidden State(단기 기억)은 그대로 또 유지하는 것이 LSTM이다. </li>
 
   ![게이트 알고리즘](https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.1.16/gate_algorithm.png)
