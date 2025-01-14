@@ -5,4 +5,4 @@
 <li> 3.  </li>
 <li>  </li>
  
- ![RNN원리](https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.1.16/RNN원리.png)
+ ![RNN](https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.1.16/RNN.png)
