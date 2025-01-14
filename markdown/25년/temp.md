@@ -15,3 +15,7 @@
 
   ![장기 의존성 문제](https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.1.16/long-term.png)
   <li> 장기 의존성 문제의 사례 : '당신의 내면의 힘을 과소평가하지 마세요' 를 번역할 때 'Don't underestimate your inner strength'로 해석이 될텐데, 마세요는 마지막이지만, Don't는 첫 번째 time step이기 때문에, 서로 의미적으로 가까운 단어이지만, Long Term dependency에 의해 학습이 잘 되지 않을 것이다. </li>
+  <li> LSTM이 기존 RNN과 다른 점 : Gate Algorithm(forget gate, input gate, candidate gate, output gate) </li>
+  <li> forget gate :  </li>
+
+  ![게이트 알고리즘](https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.1.16/gate_algorithm.png)
