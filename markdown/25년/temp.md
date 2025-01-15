@@ -36,14 +36,16 @@
 <li> Context Vector : 마지막 LSTM의 Hidden State를 요약된 정보로 사용하는데, 이를 Context Vector라고 한다. </li>
 <li> Decoder : Context Vector를 초기 상태로 받아, 번역된 문장을 생성한다. (Encoder와 Decoder는 당연히 서로 다른 가중치 파라미터를 사용한다.) </li>
 </ul>
+<li> 개선될 부분 : Seq2Seq 모델은 Context Vector(Encoder-Decoder 사이의 Cell/Hidden State)가 고정된 크기라는 점에서 입력 Sequence가 긴 경우 정보 손실이 발생할 수 있다는 문제가 있다. </li>
 <li> 내 생각(정리 해보자.) </li>
 <ul>
 <li> Encoder 부분도, Decoder 부분도 모두 LSTM으로 되어있다. </li>
 <li> Encoder 부분에서는 출력을 내는 대신에, Hidden State와 Cell State만 반복해서 업데이트를 수행한다. </li>
-<li> 그렇게 되면 마지막 Hidden State와 Cell State는 문맥에 대한 모든 정보가 들어가게 됨. 이것을 Context Vector라고 한다.(Context Vector = Cell State + Hidden State) </li>
+<li> 그렇게 되면 마지막 Hidden State와 Cell State는 문맥에 대한 모든 정보가 들어가게 됨. 이것을 Context Vector라고 한다.(Context Vector = Cell State + Hidden State) </li>햐햐
 <li> Decoder 부분에서는 이 Context Vector와 SOS(Start of Sentence)의 초기값을 이용하여 단어를 출력하게 되고, 이전 Hidden State와 Cell State를 이용하여 이번 LSTM(time step)의 Cell State와 Hidden State를 업데이트하여 단어를 출력하는 것을 반복한다. </li>
 <li> 여기에서 입력 sequence와 출력 sequence의 길이가 달라질 수 있는 이유는 EOS가 나올 확률이 가장 높아질 때까지 단어 생성을 반복하기 때문이다. </li>
 </ul>
 
 ![Seq2Seq](https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.1.16/Seq2Seq.png)
 
+### Attention Model
