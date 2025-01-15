@@ -48,4 +48,15 @@
 
 ![Seq2Seq](https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.1.16/Seq2Seq.png)
 
+
 ### Attention Model
+
+
+
+### Self-Attention
+
+
+
+### Transformer
+
+
