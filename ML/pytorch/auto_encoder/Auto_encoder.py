@@ -1,7 +1,7 @@
 '''
 가장 간단한 CNN구조를 이용한 MNIST 데이터 encoder - decoder로 구현해보기.
 '''
-
+import numpy as np
 import torch.nn as nn
 import torch
 import torchvision
@@ -86,8 +86,10 @@ if __name__ == '__main__':
     
     # Test Part
     for images, _ in test_loader:
-        fake_images = model(images)
+        images = images.view(images.size(0), -1) # Flatten함.
+        fake_images, _ = model(images)
+        
         fig, axes = plt.subplots(2, 1)
-        axes[0].imshow(images)
-        axes[1].imshow(fake_images)
+        axes[0].imshow(images[0].reshpae(28, 28).detach().numpy())
+        axes[1].imshow(fake_images[0].reshape(28, 28).detach().numpy())
         plt.show()
