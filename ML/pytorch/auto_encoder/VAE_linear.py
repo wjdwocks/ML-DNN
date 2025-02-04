@@ -19,21 +19,22 @@ class VAE(nn.Module):
 
         # Encoder
         self.encoder = nn.Sequential(
-            nn.Linear(28*28, 128),
+            nn.Conv2d(in_channels=1, out_channels=2, kernel_size=3, stride=2, padding=1), # (14, 14)
             nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU()
+            nn.Conv2d(in_channels = 2, out_channels=4, kernel_size=3, stride=2, padding=1), # (7, 7)
+            nn.ReLU(),
+            nn.Conv2d(in_channels=4, out_channels=8, kernel_size=3, stride=2, padding=1) # (4, 4)
         )
-        self.mu_layer = nn.Linear(64, 2)  # 평균 (mu)
-        self.log_var_layer = nn.Linear(64, 2)  # 분산 (log_var)
-
+        self.mu_layer = nn.Linear(4*4*8, 2)  # 평균 (mu)
+        self.log_var_layer = nn.Linear(4*4*8, 2)  # 분산 (log_var)
+        self.decoder_input = nn.Linear(2, 4*4*8) # decoder에 넣기 전에 할 작업.
         # Decoder
         self.decoder = nn.Sequential(
-            nn.Linear(2, 64),
+            nn.Conv2d(in_channels=8, out_channels=4, kernel_size=3, stride=2, padding=1), 
             nn.ReLU(),
-            nn.Linear(64, 128),
+            nn.Conv2d(in_channels=4, out_channels=2, kernel_size=3, stride=2, padding=1),
             nn.ReLU(),
-            nn.Linear(128, 28*28),
+            nn.Conv2d(in_channels=2, out_channels=1, kernel_size=3, stride=2, padding=1),
         )
 
     def encode(self, x):
@@ -53,6 +54,7 @@ class VAE(nn.Module):
     def forward(self, x):
         mu, log_var = self.encode(x)
         z = self.reparameterize(mu, log_var)  # 잠재 공간에서 샘플링
+        z = self.decoder_input(z)
         recon_x = self.decode(z)
         return recon_x, mu, log_var
 
@@ -64,7 +66,7 @@ def loss_function(recon_x, x, mu, log_var):
     return recon_loss + kl_divergence * 0.0001  # KL 손실 가중치 조절
 
 
-if __init__ == '__main__':
+if __name__ == '__main__':
     # ✅ 데이터 전처리 및 로드
     pipeline = transforms.Compose([
         transforms.ToTensor()
