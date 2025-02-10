@@ -1,8 +1,8 @@
 import numpy as np
 
-a = [69.4218,
-69.1439,
-69.8906
+a = [90.6924,
+90.9536,
+90.3658
 ]
 print(f'{np.mean(a):.4f}')
 print(f'{np.std(a):.4f}')
