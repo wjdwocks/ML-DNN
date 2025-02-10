@@ -106,9 +106,9 @@ YOLOv1과 YOLOv2 이후의 차이를 이해하면, Anchor Box의 필요성을 �
 ---
 
 
-## 🎯 **YOLOv1 핵심 요약**
+## 🎯 **YOLO 핵심 요약**
 - **이미지를 S x S 크기의 Grid로 나누고, 각 Grid Cell에서 Bounding Box를 예측하는 방식**
-- **Bounding Box의 Confidence Score를 계산하여, 특정 Threshold 이상인 박스만 유지**
+- **Bounding Box의 Confidence Score를 계산하여, 특정 Threshold 이상인 박스만 유지 (예측을 수행할 때에만)**
 - **Loss를 통해 Bounding Box의 위치, Confidence Score, 클래스 예측을 최적화**
 - **Validation 단계에서 NMS를 적용하여 최종 Bounding Box를 선택**
 - **YOLOv2 이후부터는 Anchor Box를 도입하여 다양한 크기의 객체 탐지가 가능하도록 개선됨**
