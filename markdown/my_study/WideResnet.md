@@ -1,4 +1,4 @@
-# WideResNet의 동작 원리
+# WideResNet의 동작 원리 (+ spkd)
 
 WideResNet(Wide Residual Network)은 ResNet을 확장한 모델로, 기존 ResNet보다 넓은 네트워크 구조를 사용하여 성능을 향상시킨다.  
 특히, **WideResNet_sp**는 SPKD(Similarity-Preserving Knowledge Distillation)에 특화된 모델로, WideResNet을 기반으로 설계되었다.  
