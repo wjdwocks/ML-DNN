@@ -2,8 +2,8 @@ import json
 import os
 
 # COCO JSON 파일 경로
-json_path = "annotations/instances_train2017.json"
-output_dir = "labels/train2017/"  # YOLO 라벨 저장 폴더
+json_path = "annotations/instances_val2017.json"
+output_dir = "labels/val2017/"  # YOLO 라벨 저장 폴더
 os.makedirs(output_dir, exist_ok=True)
 
 # JSON 파일 열기

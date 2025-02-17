@@ -1,5 +1,5 @@
 # coco.yaml (YOLO용 데이터셋 설정 파일)
-path: ~/../storage/coco
+path: /home/storage/coco
 train: train2017  # Training 이미지 폴더
 val: val2017      # Validation 이미지 폴더
 test:  # COCO 테스트 데이터는 선택적
