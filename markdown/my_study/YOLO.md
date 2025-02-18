@@ -10,16 +10,11 @@ YOLO는 학습된 모델을 사용하여 새로운 이미지에서 객체를 탐
 
 ### 📌 **Prediction 과정**
 1. **이미지를 S x S 크기의 겹치지 않는 Grid로 나눈다.**
-2. **각 Grid Cell이 포함하는 객체의 중심을 기준으로 탐지 확률 P(Object)을 계산하고, 가중치(Weight) Parameter를 기반으로 Bounding Box를 생성한다.**
-3. **각 Bounding Box의 Confidence Score를 계산한다.**  
-   - Confidence Score = P(Object) x IoU(예측된 박스, GT)
-4. **Confidence Score가 특정 Threshold를 넘는 Bounding Box만 남긴다.**  
-   - 단, **학습(Training) 때는 Threshold를 적용하지 않으며, 모든 Bounding Box를 유지한다.**
-5. **Threshold를 넘는 Bounding Box들은 Loss 값을 최소화하는 방향으로 조정되며, IoU가 높아지는 방향으로 학습된다.**
-6. **Bounding Box는 Grid Cell 내부에만 한정되지 않고, 조정될 수 있다.**
-7. **Validation 단계에서 NMS(Non-Maximum Suppression)를 적용하여 중복된 Bounding Box를 제거한다.**  
-   - **하나의 객체에 여러 개의 Bounding Box가 예측될 수 있기 때문에, 가장 Confidence Score가 높은 Bounding Box 하나만 남긴다.**
-   - 최종적으로, Confidence Score가 가장 높은 Bounding Box가 선택되어 객체의 위치를 예측한다.
+2. **각 Grid Cell에서 사전에 학습된 가중치로 Bounding Box를 생성한다.**
+3. **각 Bounding Box마다 Confidence Score(P(Obect) x IoU)를 계산한다.**
+4. **계산된 Confidence Score가 Threshold를 넘지 못하면 제거한다.**
+5. **NMS(Non-Maximum Suppression)을 적용하여 하나의 객체마다 가장 높은 Confidence Score를 가진 Bounding Box만 가지도록 중복을 제거한다.**
+6. **그렇게 생성된 Bounding Box와 해당 객체에 대한 label값을 Predict 하게 된다.**
 
 ---
 
@@ -29,7 +24,7 @@ YOLO는 학습(Training) 과정에서 모델의 가중치를 조정하여 최적
 ### 📌 **Training 과정**
 1. **각 Epoch마다 YOLO는 이미지를 S x S 크기의 겹치지 않는 Grid로 나눈다.**
 2. **각 Grid Cell이 포함하는 객체의 중심을 기준으로 탐지 확률 P(Object)를 계산하고, 가중치 Parameter를 기반으로 Bounding Box를 생성한다.**  
-   - ⚠️ **Anchor Box 개념 도입(YOLOv2 이후)을 함께 공부할 것!**
+   - ⚠️ **YOLOv2부터는 Bounding Box가 Anchor Box로, 여러 크기로 존재한다. (이전에는 랜덤 크기.)**
 3. **모든 Bounding Box의 Parameter 가중치와 P(Object)를 예측하는 Parameter들은 Loss 값을 기반으로 업데이트된다.**
 4. **Loss 값은 세 가지 요소로 구성된다.**
    - **Localization Loss**: Bounding Box의 위치x, y, w, h가 GT와 가까워지도록 조정하는 손실
@@ -64,7 +59,9 @@ YOLO는 학습(Training) 과정에서 모델의 가중치를 조정하여 최적
 ### **Confidence Score란?**
 - 특정 Bounding Box가 실제로 객체를 포함하는지를 예측하는 점수.
 - Confidence Score = P(Object) x IoU(Predicted Box, GT)
-  - P(Object): 해당 Grid Cell 안에 객체가 존재할 확률
+  - P(Object): 해당 Grid Cell 안에 객체가 존재할 확률 (모델이 학습을 통해 예측하는 값.)
+   - Training 과정 : Ground Truth에서 Grid Cell안에 객체의 중심이 존재하면 1, 아니라면 0이다.
+   - Predict 과정 : CNN을 통해 특징을 추출한 후, Grid Cell 별로 P(Object)를 예측하는 출력값을 생성한다. (0~1 사이 값.)
   - IoU(Predicted Box, GT): 예측된 Bounding Box와 실제 정답(GT) 박스의 IoU
 - 즉, **Confidence Score는 Bounding Box마다 가지는 점수이며, P(Object)와 IoU를 곱하여 계산된다.**
 
@@ -112,6 +109,11 @@ YOLOv1과 YOLOv2 이후의 차이를 이해하면, Anchor Box의 필요성을 �
 - **Loss를 통해 Bounding Box의 위치, Confidence Score, 클래스 예측을 최적화**
 - **Validation 단계에서 NMS를 적용하여 최종 Bounding Box를 선택**
 - **YOLOv2 이후부터는 Anchor Box를 도입하여 다양한 크기의 객체 탐지가 가능하도록 개선됨**
+- **YOLO의 출력 : {S x S x (B x 5 + C)}**
+   - S : 나뉘는 Grid Cell의 개수. (S x S 개의 Grid Cell로 나뉘게 된다.)
+   - B : 각 Grid Cell마다 가지는 Bounding Box의 개수.
+      - 각 Bounding Box에는 (x, y, w, h, P(obj)) 의 다섯 개의 값을 가지므로 (B x 5)로 표현됨.
+   - C : 각 Bounding Box 마다 Class를 예측해야하기 때문에 C개의 클래스 개수도 포함하게 된다. (각 클래스 마다의 확률을 얻고, 가장 높은 것을 선택함.)
 
 ---
 
