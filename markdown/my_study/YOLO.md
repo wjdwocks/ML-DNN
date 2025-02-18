@@ -102,6 +102,74 @@ YOLOv1과 YOLOv2 이후의 차이를 이해하면, Anchor Box의 필요성을 �
 
 ---
 
+## 5️⃣ YOLOv3에서 달라진 점.
+
+### **📌Darknet-53 이라는 새로운 Backbone Network 도입.**
+- YOLOv2는 Darknet-19를 사용했었는데, 이보다 깊고 강력한 구조를 사용함.
+- ResNet 스타일의 Residual Connections를 적용하여 더 깊은 네트워크로 성능을 향상시키면서도 연산량을 줄이는 효과를 챙겼다.
+- Darknet-53은 ResNet-50 정도의 성능이면서, 속도는 더 빠르다고 한다.
+
+### **📌Multi-Scale Prediction (FPN 구조를 도입함.)**
+- YOLOv3부터는 3개의 서로 다른 Scale에서 객체를 예측한다.
+- 작은 객체, 중간 크기 객체, 큰 객체를 각각 예측할 수 있도록 설계되어서 작은 객체에 대한 탐지 성능이 크게 향상됨.
+- Multi-Scale Prediction의 작동 방식
+   - 네트워크의 서로 다른 깊이에서 3개의 Feature Map을 추출한다.
+   - 작은 scale(13 x 13), 중간 scale(26 x 26), 큰 scale(52 x 52)에서 객체를 예측한다. (크기는 예시임. input = (416, 416) 기준.)
+   - 작은 객체는 해상도가 높은 Feature Map에서, 큰 객체는 해상도가 낮은 Feature Map에서 잘 감지가 되는 경향이 있다.
+   - 각 Feature Map이라는 것은, Darknet-53도 Resnet처럼 여러 개의 Stage -> Block을 통하는 구조로 되어있기 때문에, 각 Stage를 통과한 Feature Map을 사용한다는 의미이다.
+   - 적용 방식.
+      - 즉, 처음에는 Anchor Box(를 통해 NN으로 결정된 값인) Bounding Box를 가지게 된다.
+      - 그렇게, 각자 크기가 다른 Bounding Box들이 생성될 것이다.
+      - 그러고, 각 Bounding Box들은 자신과 비슷한 크기의 객체를 찾으려고 할 것임. + (객체의 크기에 더 맞게 조정도 되어갈 것이다.)
+      - 이 때 모든 layer에서 학습이 되기는 하지만, 각 Stage별로 작은 객체는 해상도가 높은 Feature Map(을 가진 layer), 큰 객체는 해상도가 낮은 Feature Map(을 출력하는 layer)에서 잘 detect될 가능성이 높다.
+      - 이렇기 때문에, Layer가 깊어진 것 + Anchor Box 방식을 통해서 작은 크기의 객체를 더 잘 탐지하게 되었다는 것을 의미한다.
+- Anchor Box와 뭐가 다른거지?
+   - 완전히 다름. 
+   - Multi Scale Prediction은 다양한 Feature Map을 통해서 다양한 크기의 Object를 예측하도록 하는 기술을 의미함.
+   - Anchor Box는 각 Feature Map에서 예측된 Bounding Box의 크기를 조정하는 과정을 의미함.
+   - 즉, Multi Scale Prediction과 Anchor Box는 서로 다른 개념이고, 같이 동작함으로써 학습 및 예측을 수행한다.
+
+
+### **📌Bounding Box의 예측 방식 변경.(Logistic Regression)**
+- YOLOv3는 Bounding Box의 중심 좌표(x, y)를 예측할 때 Logistic Regression을 사용한다.
+- 이를 통해서 Bounding Box가 Grid Cell을 벗어나지 않도록 안정적으로 조정된다고 함.
+- 예측된 x, y는 (0 ~ 1)사이 값을 갖도록 하며, 이 값은 Grid Cell 내부의 상대 좌표로 변환된다.
+   - logistic regression은 sigmoid 함수를 통해 (x, y)의 값을 (0 ~ 1)범위로 제한하기 때문임..
+- 왜 Bounding Box의 중심이 Grid Cell 내부에만 존재하도록 제한하는 것이 좋은가?
+   - 만약 Bounding Box가 Grid Cell외부로 나간다면, 하나의 객체를 여러 Grid Cell에서 중복으로 예측하려고 할 수 있다. (매우 비효율적.)
+   - 즉, 애초부터 Grid Cell을 나눈 이유가, 그 구역 내의 객체를 정확히 탐지시키기 위한것인데, 탐지하기 쉬운 물체가 Grid Cell 밖에 있다면 거기로 몰려버리게 되어서 제대로된 학습이 되지 않음.
+
+
+### **📌클래스 예측 방식의 변경 (Softmax → 독립적인 Sigmoid)**
+- YOLOv2에서는 Softmax를 사용하여 다중 클래스 확률을 예측했다. (하나의 Bounding Box마다 1개의 클래스)
+   - 이러한 방식의 문제는 객체가 여러 클래스를 가질 가능성이 있는 경우(**자전거를 탄 사람**) 적절하지 못하다.
+- 그래서 YOLOv3는 각 클래스에 대해 독립적인 Sigmoid 확률을 계산하여, Multi-label Classification이 가능해졌다.
+- 그래서 각 클래스마다 Sigmoid값을 계산하여 특정 threshold를 넘으면 그 클래스가 맞다고 예측하는건가?
+   - 특정 threshold 를 넘는다면, 그 클래스(label)이 그 boundingbox 내에 존재한다고 판단한다.
+   - 보통 threshold는 0.5정도를 사용한다고 함. (물론 데이터셋마다 다르겠지만.)
+
+
+### **📌새로운 손실 함수를 설계함.**
+- YOLOv3부터는 IoU 기반의 새로운 손실 함수를 도입하였다.
+- Bounding Box 예측의 정확도를 높이기 위한 IoU 기반의 좌표 손실을 개선하였다.
+   - IoU : (두 Bounding Box의 교집합) / (두 Bounding Box의 합집합.) - 여기서 두 Bounding Box란, 예측한 것과 Ground Truth의 Bounding Box를 의미함.
+   - GIoU (Generalized IoU) : IoU - (C - U) / C , 
+      - GIoU는 IoU를 개선한 버전으로, 두 Bounding Box가 겹치지 않을 때에도 학습이 가능하도록 한다.
+      - C : 두 Bounding Box를 포함하는 최소한의 영역. (최소 외접 박스)
+      - U : 두 Bounding Box의 합집합.
+   - DIoU (Distance IoU) : IoU - (ρ² / c²) 
+      - DIoU는 중심 간 거리를 최소화하여 Bounding Box를 더 빠르게 정렬하게 해준다.
+      - ρ : 두 Bounding Box 중심 간 거리.
+      - c : 두 Bounding Box를 포함하는 최소 외접 박스의 대각선 길이.
+   - CIoU (Complete IoU) : IoU - (ρ² / c²) - αv
+      - CIoU는 IoU + 중심 거리 + Aspect Ratio까지 고려하여 가장 안정적인 Bounding Box를 조정한다. (YOLOv4, YOLOv5에서도 기본적용됨.)
+      - α : 가중치
+      - v : Bounding Box의 가로세로 비율 차이.
+
+최소외접 박스
+<img src="https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.2.20/Minimum_Enclosing_Box.png" alt="최소외접박스" width="500">
+
+---
 
 ## 🎯 **YOLO 핵심 요약**
 - **이미지를 S x S 크기의 Grid로 나누고, 각 Grid Cell에서 Bounding Box를 예측하는 방식**
@@ -121,3 +189,6 @@ YOLOv1과 YOLOv2 이후의 차이를 이해하면, Anchor Box의 필요성을 �
 📌 **YOLOv1은 Bounding Box를 직접 예측하는 방식이었지만, YOLOv2 이후부터는 Anchor Box를 도입하여 더욱 정교한 탐지가 가능해졌다.**  
 📌 **YOLO는 한 번의 Forward Pass로 전체 이미지에서 객체를 탐지할 수 있도록 설계된 실시간 Object Detection 모델이다.**  
 📌 **이 문서를 다시 읽을 때는 YOLO 최신 버전과 비교하면서 차이점을 분석해볼 것!**
+
+
+1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣ 8️⃣ 9️⃣ 🔟

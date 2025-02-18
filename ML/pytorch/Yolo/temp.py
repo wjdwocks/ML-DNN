@@ -2,8 +2,8 @@ import json
 import os
 
 # COCO JSON 파일 경로
-json_path = "/home/storage/coco/annotations/instances_train2017.json"
-output_dir = "/home/storage/coco/labels/train2017"
+json_path = "/home/storage/coco/annotations/instances_val2017.json"
+output_dir = "/home/storage/coco/labels/val2017"
 os.makedirs(output_dir, exist_ok=True)
 
 # JSON 파일 열기
