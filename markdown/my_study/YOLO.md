@@ -166,7 +166,7 @@ YOLOv1과 YOLOv2 이후의 차이를 이해하면, Anchor Box의 필요성을 �
       - α : 가중치
       - v : Bounding Box의 가로세로 비율 차이.
 
-최소외접 박스
+- 최소외접 박스
 <img src="https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.2.20/Minimum_Enclosing_Box.png" alt="최소외접박스" width="500">
 
 ---
