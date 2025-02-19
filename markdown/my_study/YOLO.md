@@ -143,6 +143,7 @@ YOLOv1과 YOLOv2 이후의 차이를 이해하면, Anchor Box의 필요성을 �
 ### **📌클래스 예측 방식의 변경 (Softmax → 독립적인 Sigmoid)**
 - YOLOv2에서는 Softmax를 사용하여 다중 클래스 확률을 예측했다. (하나의 Bounding Box마다 1개의 클래스)
    - 이러한 방식의 문제는 객체가 여러 클래스를 가질 가능성이 있는 경우(**자전거를 탄 사람**) 적절하지 못하다.
+   - 또한, 사람이면서 남자인 경우. (중복된 label을 가질 수도 있는 경우에도 더 좋다.)
 - 그래서 YOLOv3는 각 클래스에 대해 독립적인 Sigmoid 확률을 계산하여, Multi-label Classification이 가능해졌다.
 - 그래서 각 클래스마다 Sigmoid값을 계산하여 특정 threshold를 넘으면 그 클래스가 맞다고 예측하는건가?
    - 특정 threshold 를 넘는다면, 그 클래스(label)이 그 boundingbox 내에 존재한다고 판단한다.
@@ -170,6 +171,11 @@ YOLOv1과 YOLOv2 이후의 차이를 이해하면, Anchor Box의 필요성을 �
 <img src="https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/25.2.20/Minimum_Enclosing_Box.png" alt="최소외접박스" width="500">
 
 ---
+
+## 6️⃣ YOLOv8에 대한 정보.
+### 
+
+
 
 ## 🎯 **YOLO 핵심 요약**
 - **이미지를 S x S 크기의 Grid로 나누고, 각 Grid Cell에서 Bounding Box를 예측하는 방식**
