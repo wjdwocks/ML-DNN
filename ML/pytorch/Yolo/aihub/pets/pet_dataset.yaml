@@ -1,0 +1,7 @@
+train: ~/data/aihub/pet_data/images/train
+val: ~/data/aihub/pet_data/images/val
+
+nc: 2
+names:
+  0: dog
+  1: cat
