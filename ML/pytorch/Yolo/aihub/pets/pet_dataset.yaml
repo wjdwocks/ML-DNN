@@ -1,5 +1,5 @@
-train: ~/data/aihub/pet_data/images/train
-val: ~/data/aihub/pet_data/images/val
+train: /home/jaechan8/data/aihub/pet_data/images/train
+val: /home/jaechan8/data/aihub/pet_data/images/val
 
 nc: 2
 names:

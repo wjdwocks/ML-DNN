@@ -15,7 +15,7 @@ model.info()
 print('---' * 20)
 
 # 모델 구조 출력 (input_size 반영)
-summary(model.model, input_size=(1, 3, 720, 640), col_names=['input_size', 'output_size', 'num_params'])
+summary(model.model, input_size=(1, 3, 640, 640), col_names=['input_size', 'output_size', 'num_params'])
 
 # YOLO 학습 실행
 model.train(
@@ -24,7 +24,7 @@ model.train(
     patience=50,
     lr0=0.01, 
     batch=32, 
-    imgsz=720,  # 너비는 자동 조정됨 (720x640)
+    imgsz=640,  # 너비는 자동 조정됨 (720x640)
     device="cuda:1",  
     weight_decay=0.001, 
     dropout=0.1, 
