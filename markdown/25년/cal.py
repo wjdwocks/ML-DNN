@@ -7,17 +7,18 @@ import numpy as np
 # '''
 # a = np.array(list(map(float, a.split())))
 # print(a.shape)
-a = [74.0472,75.5924,93.4799,92.3992,84.8462,89.1631,94.3146,63.5968,100.000]	
-b = [74.1546,75.9745,94.0586,93.0374,84.1082,88.8412,93.9683,68.0993,100.000]
-c = [72.6516,73.4777,94.6373,92.3412,81.3824,87.5000,95.4978,65.8480,100.000]
-d = [75.9259,77.2739,94.8302,93.9368,82.3862,87.0976,94.7186,53.9780,100.000]
+a = [90.3249,91.1913,89.9639]
+b = [90.9747,91.0469,90.7581]
+c = []
+d = []
 
 # print(np.sqrt(26))
 print(f'{np.mean(a):.4f}')
-print(f'{np.std(a)/np.sqrt(26):.4f}')
+print(f'{np.std(a):.4f}')
 print(f'{np.mean(b):.4f}')
-print(f'{np.std(b)/np.sqrt(26):.4f}')
+print(f'{np.std(b):.4f}')
 print(f'{np.mean(c):.4f}')
-print(f'{np.std(c)/np.sqrt(26):.4f}')
+print(f'{np.std(c):.4f}')
 print(f'{np.mean(d):.4f}')
-print(f'{np.std(d)/np.sqrt(26):.4f}')
+print(f'{np.std(d):.4f}')
+#print(f'{np.std(d)/np.sqrt(26):.4f}')
