@@ -68,6 +68,25 @@
 <li> 보니, data에 대한 용량이 거의 대부분이고, .py나 .sh파일들, 간단한 .git파일들의 용량은 별로 안크고, 데이터가 대부분이라서, 이 데이터를 저장할 storage 디렉토리를 4TB짜리로 했다. </li>
 <li> 이거를 바꾸니, 모든 .py파일의 데이터 경로를 바꾸고 싶지 않아서, symbolic link를 통해 참조만 남겨두는 방법을 사용함. </li>
 
+### 25.4.11 유저 더 추가.
+<li> 사람이 둘 더 들어옴. </li>
+<li> 서버에 adduser로 추가를 하고, (자동으로)홈디렉토리까지 만들어줌. </li>
+<li> Conda를 어차피 서버에 공유로 사용하려고 다운받아놨으니, 환경까지 만들어줘야함. </li>
+<li> 아레 명령어만 차례대로 하면 됨. <li>
+<img src="https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/Study/server.png" alt="user add" width="500">
+
+sudo adduser test # 유저 추가
+test # 비밀번호 입력
+echo 'export PATH="/home/imrl/anaconda3/bin:$PATH"' >> ~/.bashrc # 접속할 때 자동으로 conda 켜지도록 경로 추가.
+source ~/.bashrc # 새로고침 느낌
+sudo usermod -aG root_access test # 저기 anaconda3에 접근 가능하도록 Group에 추가
+conda --version # conda에 잘 접근이 되는지 확인.
+conda init # conda 환경 사용할 수 있도록 초기화
+source ~/.bashrc # 새로고침까지 해줘야 완성.
+--- 여기부턴 자신에 맞춰서 python 및 library 추가 ---
+conda create -n 자기이름_env python = 3.9 # 뭐이런거
+
+
 ### 느낀점
 <li> 위에 과정을 간추려보니 매우 아무것도 아닌 것 같지만, 아무것도 모른 채로 하려고 하니 죽을맛이었다. </li>
 <li> 계속 뭐 하나 하려고 하면 한쪽에서 문제가 생기고 하는게 정말 읍읍마려웠다. </li>
