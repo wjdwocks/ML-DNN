@@ -75,17 +75,6 @@
 <li> 아레 명령어만 차례대로 하면 됨. <li>
 <img src="https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/Study/server.png" alt="user add" width="500">
 
-sudo adduser test # 유저 추가
-test # 비밀번호 입력
-echo 'export PATH="/home/imrl/anaconda3/bin:$PATH"' >> ~/.bashrc # 접속할 때 자동으로 conda 켜지도록 경로 추가.
-source ~/.bashrc # 새로고침 느낌
-sudo usermod -aG root_access test # 저기 anaconda3에 접근 가능하도록 Group에 추가
-conda --version # conda에 잘 접근이 되는지 확인.
-conda init # conda 환경 사용할 수 있도록 초기화
-source ~/.bashrc # 새로고침까지 해줘야 완성.
---- 여기부턴 자신에 맞춰서 python 및 library 추가 ---
-conda create -n 자기이름_env python = 3.9 # 뭐이런거
-
 
 ### 느낀점
 <li> 위에 과정을 간추려보니 매우 아무것도 아닌 것 같지만, 아무것도 모른 채로 하려고 하니 죽을맛이었다. </li>
