@@ -73,5 +73,33 @@
 <li> 서버에 adduser로 추가를 하고, (자동으로)홈디렉토리까지 만들어줌. </li>
 <li> Conda를 어차피 서버에 공유로 사용하려고 다운받아놨으니, 환경까지 만들어줘야함. </li>
 <li> 아레 명령어만 차례대로 하면 됨. <li>
-<img src="https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/Study/server.png" alt="user add" width="500">
+
+```
+// 서버에서 진행
+sudo adduser test # 유저 추가 (test는 내 id)
+test # 내가 사용할 비밀번호 입력
+test # 한번 더 입력
+// 여기서 나머지 다 건너뜀 (enter 누르고, 마지막에 Y 입력)
+sudo usermod -aG root_access test # anaconda가 서버폴더에 있으므로 접근가능한 group에 본인 추가. test는 본인 id
+
+// 방금 만든 id로 접속
+su - test # 이렇게 서버에서 직접 내 id로 접속해도 됨.
+echo 'export PATH="/home/imrl/anaconda3/bin:$PATH"' >> ~/.bashrc # 접속할 때 마다 자동으로 conda가 켜지도록 bashrc에 명령어 추가
+source ~/.bashrc # 새로고침
+conda --version # conda에 잘 접근이 되는지 확인
+conda init # conda 환경을 사용할 수 있도록 초기화
+source ~/.bashrc # 새로고침 
+// 이후에 현재디렉토리 앞에 (base)가 보여야함.
+
+// 여기부터는 자신의 버전에 맞게 가상환경 설정을 하면 됨
+conda create -n test_env python=3.9 # 이런식으로 만들고
+conda activate test_env # 그거 활성화 시키면 앞에 (base)가 (test_env)로 바뀐다
+
+// 서버에 접속하는 방법 cmd 창에서
+ssh -p 3300 test@117.17.199.28 # 로 접속하고
+test # 비밀번호 입력
+// vscode에서 - Remote - SSH Extension 이용
+동일하게 위의 ssh -p 3300 test@117.17.199.28로 연결 후 본인 비밀번호 입력
+```
+
 
