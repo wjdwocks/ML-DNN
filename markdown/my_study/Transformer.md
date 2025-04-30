@@ -27,12 +27,26 @@
 
 ---
 
-## 2. Transformer의 주요 구성 요소
-1. **Positional Encoding** → Input Embedding 시 단어 순서 정보를 반영
-2. **Multi-Head Self-Attention** → 단어 간의 연관성을 여러 Head를 통해 다양한 관점에서 학습
-3. **Feed Forward Network (FFN)** → 비선형 변환을 통해 표현력 증가 + 깊이 있는 학습 가능
-4. **Residual Connection + Layer Normalization** → 안정적인 학습
-5. Encoder의 결과로는 문맥 정보가 풍부한 Contextualized Vector를 만든다.
+## 2. Transformer의 Encoder 주요 구성 요소.
+1. **Token Embedding + Positional Encoding**
+   - 단어(Token)을 고차원 벡터로 변환한 후, 순서 정보를 나타내는 Positional Encoding을 더해 Transformer가 순서를 인식할 수 있게 함.
+2. **Multi-Head Self-Attention**
+   - 각 Token이 문장 내 모든 Token과의 관계(유사도)를 계산하여 문맥을 반영한 벡터로 재구성함.
+   - 여러 개의 Head를 사용해 다양한 관점(의미적, 문법적, 위치적 등)에서 Attention을 수행.
+   - Head는 각 단어의 어떤 면에 집중할 것인지를 의미함.
+   - 여기까지가 입력 Token의 vector표현을 위한 전처리라고 생각하면 됨.
+3. **Feed Forward Network (FFN)** 
+   - 각 Token에 독립적으로 적용되는 2 layer의 비선형 신경망
+   - Attention을 통해 정제된 벡터 표현을 더 고차원적으로 가공하며, 모델이 복잡한 의미 표현을 학습할 수 있도록 **표현력**을 증가시킴.
+   - 여기서 말하는 표현력이란, 각 Token의 Embedding Vector를 미세하게 조정하여 최적의 값을 가지도록 한다는 의미.
+4. **Residual Connection + Layer Normalization** 
+   - 각 블록 출력에 입력을 더해주는 Skip Connection을 통해 정보 흐름을 유지하고, Layer Normalization을 통해 학습 안정성과 수렴 속도 향상.
+5. **결과 : Contextualized Representation**
+   - 입력 문장 내 각 Token은 이제 문맥 정보를 반영한 벡터로 변환되어, Decoder나 후속 작업에서 사용할 수 있는 **문맥 Embedding**으로서 완성됨.
+6. **Encoder의 주요 목표**
+   - 입력 문장의 각 Token을 문맥 정보가 반영된 벡터로 변환하는 역할을 함.
+   - 그에 따라서 Encoder의 출력은 input으로 들어온 Sequence(token들)를 문맥 정보가 포함된 Vector 표현으로 바꾼 Vector들이 된다.
+   - 이 출력 Vector들은 Decoder에서 Cross-Attention의 Key/Value로 사용이 된다.
 
 ---
 
@@ -42,9 +56,10 @@
 > **"I am a teacher" (영어) → "나는 선생님이다" (한글)로 번역한다고 가정**
 
 ### Step 1: Input Embedding + Positional Encoding
-- 각 단어를 **Embedding 벡터(고차원 표현)로 변환**
+- 입력 Sequence(문장)을 Tokenization을 함. → 'I', 'am', 'a', 'teacher'
+- 각 단어(Token)를 **Embedding 벡터(고차원 표현)로 변환**
 - Transformer는 단어의 순서를 알 수 없기 때문에 **Positional Encoding 추가**
-- 최종 입력 벡터 = `Embedding Matrix + Positional Encoding`
+- 최종 입력 벡터 = `Embedding Vector + Positional Encoding`
 
 ---
 
@@ -52,7 +67,7 @@
 > **"I am a teacher" 문장에서 단어들 간의 연관성을 학습**
 
  **Query, Key, Value 행렬 생성**
-- Self-Attention을 수행하여 **각 단어가 문장 내 다른 단어와 얼마나 관련 있는지 계산**
+- Self-Attention을 수행하여 **입력 Sequence 문장 내 각 단어가 문장 내 다른 단어와 얼마나 관련 있는지 계산**
 
  **Scaled Dot-Product Attention 수행**
 - Attention Score 계산: Attention(Q, K, V) = softmax((Q * K^T) / sqrt(d_k)) * V
@@ -81,7 +96,7 @@
 
 ### Decoder의 입력
 - 훈련할 때는 **정답 문장의 앞부분**이 Decoder의 입력이 됨
-- 예측할 때는 **Decoder가 예측한 단어를 입력으로 사용**
+- 예측할 때는 **Decoder가 이전 step에서 예측한 단어 or SOS를 입력으로 사용**
 - 예) `"<SOS> 나는"` → `"나는 선생님"` → `"나는 선생님이다"`
 
 ---
