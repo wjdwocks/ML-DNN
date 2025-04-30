@@ -91,8 +91,27 @@
  **Residual Connection과 Layer Normalization을 수행하여 정보 손실 방지**
 
 ---
+## 4. Decoder의 주요 구성
+1. **Token Embedding + Positional Encoding**
+   - Predict : [Start of Sentence 또는 이전 출력 Sequence]를 고차원 벡터로 변환하고, 위치 정보를 더함.
+   - 학습 시 : 정답 전체 Sequence를 입력으로 사용한다.
+2. **Masked Self-Attention**
+   - 기존 Encoder와 동일한 Self-Attention 구조지만, 미래의 단어를 보지 못하도록 마스킹함.
+   - Test(Predict) 시 현재까지 출력한 Sequence 내에서만 Self-Attention을 수행
+   - ex) 학습 시 3번째 단어를 예측할 때에는 1~2번 단어까지만 Self-Attention을 수행. 
+3. **Cross Attention**
+   - Encoder에서 나온 입력 문장의 Context Vector를 K, V로, Decoder에서 나온 이번 단어 Vector를 Query로 입력 문장을 참조함.
+   - Decoder가 입력 Sequence의 의미를 활용할 수 있도록 도와주는 핵심 모듈임.
+   - 즉, Cross Attention을 안하면, Encoder가 있을 필요가 없음. (Encoder의 Attention 가중치와 Decoder의 Attention 가중치는 각각 따로 학습됨.)
+4. **Feed Forward Network(FFN)**
+   - Encoder와 동일하게 각 위치에 독립적으로 적용되는 비선형 MLP Layer
+5. **Residual Connection + LayerNorm**
+   - 각 레이어 블록마다 안정적 학습과 정보 손실 방지를 위해 포함.
+6. **Decoder의 마지막 출력 단어 벡터는 Softmax Layer를 거쳐 단어 분포로 변환**
+   - Auto-Regressive 하게 한 단어씩 생성되며, 생성된 단어는 다시 Decoder에 입력되어 다음 단어 예측에 사용된다.
 
-## 4. Transformer의 Decoder 동작 과정 (Context 벡터 → 문장 생성)
+
+## 5. Transformer의 Decoder 동작 과정 (Context 벡터 → 문장 생성)
 
 ### Decoder의 입력
 - 훈련할 때는 **정답 문장의 앞부분**이 Decoder의 입력이 됨
@@ -152,22 +171,13 @@
 
 # Transformer 전체 과정 요약
 1. **Encoder**
- - 입력 문장을 **벡터로 변환**
- - Self-Attention을 수행하여 단어 간 관계 학습
- - FFN을 통해 더욱 정제된 벡터 생성
+ - 입력 문장을 **위치 정보를 포함한 벡터로 변환**
+ - Multihead-Self-Attention을 수행하여 문장 내 단어 간 관계 학습(이 때 Attention 가중치도 함께 학습이 진행됨.)
+ - FFN을 통해 더욱 정제된 벡터로 변환
 
 2. **Decoder**
- - 이전까지 생성된 단어를 입력으로 사용
- - Masked Self-Attention 수행
- - Encoder-Decoder Attention을 통해 입력 문장 정보 반영
+ - 이전까지 생성된 Sequence or SOS를 입력으로 사용
+ - 입력을 위치 정보를 포함한 벡터로 변환
+ - Masked Self-Attention을 수행하여 현재까지 만들어진 Sequence 내 단어 간 관계를 학습.
+ - Cross Attention을 통해 Encoder에서 생성한 벡터와의 관계를 학습.
  - FFN을 통해 최적의 벡터 생성 후 Softmax를 통해 단어 예측
-
----
-
-#  결론
-Transformer는 **문장을 효과적으로 표현(Encoding)하고, 이를 기반으로 새로운 문장을 자연스럽게 생성(Decoding)하는 모델**이다.
-- **Self-Attention** → 문맥을 반영한 벡터 생성
-- **Multi-Head Attention** → 다양한 의미를 학습
-- **Residual Connection & FFN** → 정보 손실 방지 & 표현력 증가
-
- **즉, "입력 문장을 벡터로 변환 → 변환된 벡터를 바탕으로 새로운 문장을 생성"하는 것이 Transformer의 핵심 원리!** 
