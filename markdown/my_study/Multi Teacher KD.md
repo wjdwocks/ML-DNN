@@ -3,9 +3,9 @@
 ## 1. Self-Paced Knowledge Distillation (자기-페이스 지식 증류, LFME, 2020)
 
 - **제안 배경**  
-  데이터 불균형(Long-tail 분포) 상황에서 모든 Teacher의 예측을 동일하게 사용하는 경우,  
-  Student는 정확하지 않은 soft label까지 무비판적으로 학습하게 되어 오히려 성능이 떨어질 수 있음.  
-  특히 학습 초반에는 Student가 복잡한 Teacher 출력을 수용할 능력이 부족하기 때문에,  
+  데이터 불균형(Long-tail 분포) 상황에서 모든 Teacher의 예측을 동일하게 사용하거나 고정된 가중치를 사용하는 경우,  
+  Student는 정확하지 않은 soft label까지 무비판적으로 학습하게 되어 오히려 성능이 떨어질 수 있음. (틀린 확률 분포를 학습할 수도 있다.)
+  특히 학습 초반에는 Student가 복잡한 Teacher 출력을 수용할 능력이 부족하기 때문에, (KD_Loss는 Student의 logits에도 연관이 있는데, 초반에는 거의 랜덤일것이라서)
   Teacher의 지식을 점진적으로 받아들이는 **커리큘럼 기반 지식 증류** 방식이 필요함.
 
 - **방식 요약**
@@ -17,28 +17,26 @@
 
   2. **Teacher 선택 및 가중치 조절**
      - Student는 학습 중, batch에 포함된 샘플이 어떤 subset 출신인지 확인하고  
-       **해당 subset을 담당한 Teacher의 예측만 사용**
+       **해당 subset을 담당한 Teacher들의 예측만 사용**
      - Teacher의 성능(정확도)과 Student의 현재 성능을 비교하여  
        **가중치(weight)**를 계산해 Teacher별 영향을 동적으로 조절  
      - → **정확한 Teacher는 더 많이 반영**, 성능이 비슷해지면 영향 줄임  
-     → *(이 부분은 성능 기반 가중치 곡선 그림으로 대체 가능)*
 
   3. **샘플 선택 커리큘럼**
      - 각 subset 내부에서 샘플 난이도(confidence 기준)를 정렬하여  
        **쉬운 샘플부터 점진적으로 어려운 샘플로 학습 확장**
      - 학습 초기에 모든 subset에서 일부 샘플만 선택 → 이후 epoch 진행에 따라 포함 비율 증가  
-     - → *(이 부분은 "점점 늘어나는 샘플 분포" 커리큘럼 타임라인 그림으로 대체 가능)*
 
 - **장점**
-  - Student가 **감당 가능한 Teacher와 샘플부터 학습**하기 때문에 과적합과 과부하 방지
+  - Student가 **감당 가능한 Teacher와 샘플부터 학습**하기 때문에 과적합과 과부하 방지 (?) 그렇다고 함
   - **정확한 Teacher의 정보만 활용**하여 부정확한 지도 신호의 영향을 억제
   - Long-tail 상황에서도 **소수 클래스 샘플이 커리큘럼에 포함될 수 있도록 설계**
   - **Teacher 수가 많아도 유연하게 통제 가능**한 구조
 
 
 - **멀티모달 다중 Teacher 사용 가능 여부**  
-  가능 (PI, GAF, Sig의 Teacher 난이도를 기반으로 순차 학습 가능)
-  또한, 각 Teacher가 특정 클래스에 대한 Confidence가 높을 수록 성능이 좋다.
+  - 내가 쓰기엔 무리가 있을듯.
+  - Subset 학습을 하지도 않기 때문에
 
 ---
 
@@ -71,25 +69,45 @@
     - 매우 적합 (각 modality의 Teacher 신뢰도 차이를 반영 가능)
     - PAMAP2를 보면, PI가 잘 맞추는 sbj가 있고, GAF가 잘 맞추는 sbj가 있고, Sig가 잘 맞추는 sbj가 다 달라서 매우 적합할듯. (내꺼보다 높으면 안되는데;;)
     https://github.com/Rorozhl/CA-MKD
+    
 ---
 
 ## 3. Adaptive Ensemble KD in Gradient Space (AE-KD, 2020)
 
 - **제안 배경**  
-  Teacher 간 손실을 단순 평균하면 서로 상충되는 gradient가 발생 가능  
-  → gradient 관점에서 최적 가중치를 찾는 방식 제안
+  다중 Teacher의 KD loss를 단순 평균 or 가중합하면,  
+  각 Teacher가 유도하는 gradient 방향이 서로 충돌(conflict)할 수 있음.  
+  → 이로 인해 Student의 파라미터 업데이트 방향이 왜곡되거나 상쇄되어  
+  학습이 제대로 진행되지 않거나 성능이 저하될 수 있음.  
+  이를 해결하기 위해 AE-KD는 **loss 공간이 아닌 gradient 공간**에서  
+  **상충을 최소화하는 가중치 조합**을 찾아 Student를 학습시키는 방식을 제안함.
 
-- **방식 요약**  
-  - Teacher마다 생성하는 gradient를 분석  
-  - Pareto 최적 기반으로 Teacher 손실 가중 조절
+- **방식 요약**
+  - 각 Teacher로부터 Student에 대한 KD gradient를 계산
+  - 이 gradient들을 단순 평균하는 대신,  
+    **gradient 방향성(벡터 내적 또는 코사인 유사도)**을 기준으로 분석하여  
+    서로 상충하지 않도록 **동적으로 가중치를 조정**
+  - 최종적으로 모든 Teacher의 gradient를  
+    **Pareto Optimal** 기준에 따라 **가장 균형 있는 방향으로 조합**하여 Student를 update
+  - 그 가중치는 어떻게 계산하는가?
 
-- **장점**  
-  - Teacher 간 상충 최소화  
-  - 이론적으로 강력한 최적화 구조  
-  - Student가 균형 잡힌 방향으로 학습 가능
+- **특징**
+  - gradient 방향이 상충되는 경우에는 일부 Teacher의 비중을 줄이고  
+    방향이 비슷한 Teacher는 더 반영되도록 조절
+  - 이를 통해 Student가 **모든 Teacher로부터 조금씩 배우되,  
+    잘못된 방향으로 이끄는 Teacher의 영향을 최소화**할 수 있음
 
-- **멀티모달 다중 Teacher 사용 가능 여부**  
-  가능 (다른 입력 형식이라도 gradient 기준 조합 가능)
+- **장점**
+  - Teacher 간 **gradient 충돌 최소화**로 학습 안정성 향상
+  - 단순 loss 평균보다 **이론적으로 더 정교한 최적화 구조**
+  - Student가 **불필요한 gradient noise 없이, 균형 잡힌 방향**으로 학습 가능
+
+- **멀티모달 다중 Teacher 사용 가능 여부**
+  가능.  
+  각 Teacher가 입력 모달리티가 다르더라도,  
+  **출력 gradient만 확보하면** 공통의 파라미터 공간(gradient space)에서  
+  조합할 수 있으므로 확장성이 높음
+
 
 ---
 
