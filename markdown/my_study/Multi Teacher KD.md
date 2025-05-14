@@ -3,35 +3,38 @@
 ## 1. Self-Paced Knowledge Distillation (자기-페이스 지식 증류, LFME, 2020)
 
 - **제안 배경**  
-  데이터 불균형(Long-tail 분포) 상황에서 모든 Teacher의 예측을 동일하게 사용하는 경우, Student는 Teacher들의 부정확하거나 불확실한 soft label까지 무비판적으로 학습하게 됨.  
-  특히 Student가 학습 초기일 때는 복잡한 soft label을 따라갈 수 있는 capacity가 부족해 오히려 학습에 방해가 되거나 과적합으로 이어질 수 있음.  
-  → 이를 방지하기 위해, Student가 이해하기 쉬운 Teacher와 샘플부터 점진적으로 학습하는  
-  **Self-Paced curriculum 구조의 KD** 방식을 제안함.
+  데이터 불균형(Long-tail 분포) 상황에서 모든 Teacher의 예측을 동일하게 사용하는 경우,  
+  Student는 정확하지 않은 soft label까지 무비판적으로 학습하게 되어 오히려 성능이 떨어질 수 있음.  
+  특히 학습 초반에는 Student가 복잡한 Teacher 출력을 수용할 능력이 부족하기 때문에,  
+  Teacher의 지식을 점진적으로 받아들이는 **커리큘럼 기반 지식 증류** 방식이 필요함.
 
-- **작동 과정**  
-  LFME(Learning From Multiple Experts)는 두 단계의 Self-Paced 전략을 사용하여 Teacher 및 샘플을 선택함:
+- **방식 요약**
 
-  1. **Self-Paced Expert Selection**:  
-     - Student가 현재 가장 잘 따라가고 있는 Teacher를 선택 (KL Divergence 기준)  
-     - Epoch이 진행됨에 따라 KL 임계값을 완화시켜 더 많은 Teacher를 포함  
-     - Teacher 간 KD Loss 가중치(α_k)는 고정되거나 softmax 정규화로 유동적으로 조정 가능
-     - 만약 내가 사용한다면, 임게값을 넘는다면 base에서 얻은 alpha값을 그대로 사용하는것도 나쁘지 않을듯 하다.
+  1. **Teacher 구성**
+     - 전체 데이터셋을 클래스 분포에 따라 여러 subset으로 나누고  
+       각 subset을 기반으로 별도의 Teacher 모델을 학습시킴
+     - 각 Teacher는 자신이 학습한 subset(class 그룹)에 대해 더 잘 예측하는 경향이 있음
 
-  2. **Curriculum Instance Selection**:  
-     - 선택된 Teacher의 soft label과 Student의 예측 간 KL Divergence가  
-       낮은 샘플부터 선택하여 학습  
-     - 점진적으로 어려운 샘플(즉, 예측 차이가 큰 샘플)도 포함되도록 임계값 증가
+  2. **Teacher 선택 및 가중치 조절**
+     - Student는 학습 중, batch에 포함된 샘플이 어떤 subset 출신인지 확인하고  
+       **해당 subset을 담당한 Teacher의 예측만 사용**
+     - Teacher의 성능(정확도)과 Student의 현재 성능을 비교하여  
+       **가중치(weight)**를 계산해 Teacher별 영향을 동적으로 조절  
+     - → **정확한 Teacher는 더 많이 반영**, 성능이 비슷해지면 영향 줄임  
+     → *(이 부분은 성능 기반 가중치 곡선 그림으로 대체 가능)*
 
-  - 실질적으로는 각 epoch마다 다음을 수행함:
-    - 각 Teacher에 대해 Student와의 KL Divergence 계산
-    - 현재 기준 이하인 Teacher만 선택하여 KD Loss 계산
-    - 이후 학습이 진행될수록 더 많은 Teacher를 포함
+  3. **샘플 선택 커리큘럼**
+     - 각 subset 내부에서 샘플 난이도(confidence 기준)를 정렬하여  
+       **쉬운 샘플부터 점진적으로 어려운 샘플로 학습 확장**
+     - 학습 초기에 모든 subset에서 일부 샘플만 선택 → 이후 epoch 진행에 따라 포함 비율 증가  
+     - → *(이 부분은 "점점 늘어나는 샘플 분포" 커리큘럼 타임라인 그림으로 대체 가능)*
 
-- **장점**  
-  - Student가 감당 가능한 수준의 지식부터 받아들일 수 있어 **학습 안정성 향상**
-  - Teacher 예측이 부정확한 경우에도 이를 필터링할 수 있어 **노이즈에 강함**
-  - Curriculum 구조 덕분에 **특히 데이터 불균형 상황에서 효과적**
-  - Student가 복잡한 지식을 **점진적으로 흡수**할 수 있도록 설계됨
+- **장점**
+  - Student가 **감당 가능한 Teacher와 샘플부터 학습**하기 때문에 과적합과 과부하 방지
+  - **정확한 Teacher의 정보만 활용**하여 부정확한 지도 신호의 영향을 억제
+  - Long-tail 상황에서도 **소수 클래스 샘플이 커리큘럼에 포함될 수 있도록 설계**
+  - **Teacher 수가 많아도 유연하게 통제 가능**한 구조
+
 
 - **멀티모달 다중 Teacher 사용 가능 여부**  
   가능 (PI, GAF, Sig의 Teacher 난이도를 기반으로 순차 학습 가능)
@@ -42,31 +45,21 @@
 ## 2. Confidence-Aware Multi-Teacher KD (CA-MKD, 2022)
 
 - **제안 배경**  
-  다중 Teacher 모델을 단순 평균하여 지식 증류를 수행할 경우,  
-  각 Teacher의 예측 품질이 고르지 않으면 오히려 Student 모델에 **혼란을 주거나 성능을 저하시킬 수 있음**.  
-  예를 들어, 어떤 샘플은 Teacher A가 잘 예측하고, 다른 샘플은 Teacher B가 더 나은데  
-  모든 Teacher를 동일한 가중치로 반영하면 부정확한 지식이 주입될 수 있음.  
-  → 이를 해결하기 위해 **샘플 단위로 Teacher의 신뢰도(confidence)를 평가하고**,  
-  그에 따라 KD loss에 **가중치를 다르게 적용**하는 구조를 제안.
+  다중 Teacher 모델을 단순 평균 혹은 고정 가중치를 이용하여 지식 증류를 수행할 경우, 각 Teacher의 예측 품질이 고르지 않으면 오히려 Student 모델에 **혼란을 주거나 성능을 저하시킬 수 있음**.  
+  예를 들어, 어떤 샘플은 Teacher A가 잘 예측하고, 다른 샘플은 Teacher B가 더 나은데 모든 Teacher를 동일한 가중치로 반영하면 부정확한 지식이 주입될 수 있음.  
+  → 이를 해결하기 위해 **샘플 단위로 Teacher의 신뢰도(confidence)를 평가하고**, 그에 따라 KD loss에 **가중치를 다르게 적용**하는 구조를 제안.
 
 - **방식 요약**  
-  - **Teacher confidence 측정**:  
-    각 Teacher의 예측과 정답 간 Cross-Entropy를 기반으로 confidence score 계산  
-    → 낮은 CE → 높은 confidence
-  - **샘플 단위 confidence-weighted KD**:  
-    각 샘플에 대해 Teacher별 confidence를 softmax 정규화 후,  
-    **해당 샘플의 KD loss는 confidence-weighted sum으로 계산**
+  - **Teacher confidence 측정**: 
+    각 Teacher의 예측과 정답 간 Cross-Entropy를 기반으로 confidence score 계산 → 낮은 CE → 높은 confidence
+  - **샘플 단위 confidence-weighted KD**: 
+    각 샘플에 대해 Teacher별 confidence를 softmax 정규화 후, **해당 샘플의 KD loss는 confidence-weighted sum으로 계산**
   - **Feature-level KD**:  
-    최종 logit만 사용하는 것이 아니라, Teacher와 Student의 **중간 feature map** 사이의 차이도  
-    L2 distance 등을 사용하여 추가적인 KD loss로 활용  
-    → 모델 내부 표현까지 전달함으로써 학습 안정성 향상
+    최종 logit만 사용하는 것이 아니라, Teacher와 Student의 **중간 feature map** 사이의 차이도 MSE 등을 사용하여 추가적인 KD loss로 활용 → 모델 내부 표현까지 전달함으로써 학습 안정성 향상
 
 - **구현 고려사항**  
-  - 학습은 **batch 단위**로 진행되지만,  
-    KD loss는 반드시 **샘플 단위로 confidence-weighted aggregation** 후 평균해야 함  
-    (그렇지 않으면 CA-MKD의 설계 철학이 무력화됨)
-  - Feature distillation은 **특정 layer의 feature map**을 정렬하는 방식으로 진행되며,  
-    일반적으로 L2 loss 또는 cosine similarity 기반
+  - 학습은 **batch 단위**로 진행되지만, KD loss는 반드시 **샘플 단위로 Confidence Score를 계산** 후 가중 평균해야 함.(그렇지 않으면 CA-MKD의 설계 철학이 무력화됨)
+  - Feature distillation은 **특정 layer의 feature map**을 정렬하는 방식으로 진행되며, 일반적으로 L2 loss(MSE) 또는 cosine similarity 기반으로 손실이 계산됨.
 
 - **장점**  
   - 신뢰도 낮은 Teacher의 영향을 억제하여 **오류 전파 감소**
@@ -75,8 +68,9 @@
   - 다양한 Teacher 조합 (다른 도메인/모달리티) 상황에도 유연하게 대응 가능
 
 - **멀티모달 다중 Teacher 사용 가능 여부**  
-  매우 적합 (각 modality의 Teacher 신뢰도 차이를 반영 가능)
-
+    - 매우 적합 (각 modality의 Teacher 신뢰도 차이를 반영 가능)
+    - PAMAP2를 보면, PI가 잘 맞추는 sbj가 있고, GAF가 잘 맞추는 sbj가 있고, Sig가 잘 맞추는 sbj가 다 달라서 매우 적합할듯. (내꺼보다 높으면 안되는데;;)
+    https://github.com/Rorozhl/CA-MKD
 ---
 
 ## 3. Adaptive Ensemble KD in Gradient Space (AE-KD, 2020)
