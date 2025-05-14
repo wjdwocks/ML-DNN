@@ -3,20 +3,39 @@
 ## 1. Self-Paced Knowledge Distillation (자기-페이스 지식 증류, LFME, 2020)
 
 - **제안 배경**  
-  데이터 불균형(Long-tail 분포)에서 학생 모델이 전체 Teacher 지식을 한꺼번에 받으면 과부하가 생김.  
-  → 쉬운 Teacher부터 순차적으로 지식을 학습하는 self-paced 방식 제안.
+  데이터 불균형(Long-tail 분포) 상황에서 모든 Teacher의 예측을 동일하게 사용하는 경우, Student는 Teacher들의 부정확하거나 불확실한 soft label까지 무비판적으로 학습하게 됨.  
+  특히 Student가 학습 초기일 때는 복잡한 soft label을 따라갈 수 있는 capacity가 부족해 오히려 학습에 방해가 되거나 과적합으로 이어질 수 있음.  
+  → 이를 방지하기 위해, Student가 이해하기 쉬운 Teacher와 샘플부터 점진적으로 학습하는  
+  **Self-Paced curriculum 구조의 KD** 방식을 제안함.
 
-- **방식 요약**  
-  - 각 Teacher를 전문가(Expert)로 보고, 쉬운 Teacher부터 학습  
-  - Curriculum 기반 2단계 증류 (Teacher 선택 + 샘플 선택)
+- **작동 과정**  
+  LFME(Learning From Multiple Experts)는 두 단계의 Self-Paced 전략을 사용하여 Teacher 및 샘플을 선택함:
+
+  1. **Self-Paced Expert Selection**:  
+     - Student가 현재 가장 잘 따라가고 있는 Teacher를 선택 (KL Divergence 기준)  
+     - Epoch이 진행됨에 따라 KL 임계값을 완화시켜 더 많은 Teacher를 포함  
+     - Teacher 간 KD Loss 가중치(α_k)는 고정되거나 softmax 정규화로 유동적으로 조정 가능
+     - 만약 내가 사용한다면, 임게값을 넘는다면 base에서 얻은 alpha값을 그대로 사용하는것도 나쁘지 않을듯 하다.
+
+  2. **Curriculum Instance Selection**:  
+     - 선택된 Teacher의 soft label과 Student의 예측 간 KL Divergence가  
+       낮은 샘플부터 선택하여 학습  
+     - 점진적으로 어려운 샘플(즉, 예측 차이가 큰 샘플)도 포함되도록 임계값 증가
+
+  - 실질적으로는 각 epoch마다 다음을 수행함:
+    - 각 Teacher에 대해 Student와의 KL Divergence 계산
+    - 현재 기준 이하인 Teacher만 선택하여 KD Loss 계산
+    - 이후 학습이 진행될수록 더 많은 Teacher를 포함
 
 - **장점**  
-  - 과부하 없이 안정적인 학습  
-  - Long-tail 분포에 강함  
-  - 기존 KD보다 더 자연스러운 학습 흐름
+  - Student가 감당 가능한 수준의 지식부터 받아들일 수 있어 **학습 안정성 향상**
+  - Teacher 예측이 부정확한 경우에도 이를 필터링할 수 있어 **노이즈에 강함**
+  - Curriculum 구조 덕분에 **특히 데이터 불균형 상황에서 효과적**
+  - Student가 복잡한 지식을 **점진적으로 흡수**할 수 있도록 설계됨
 
 - **멀티모달 다중 Teacher 사용 가능 여부**  
   가능 (PI, GAF, Sig의 Teacher 난이도를 기반으로 순차 학습 가능)
+  또한, 각 Teacher가 특정 클래스에 대한 Confidence가 높을 수록 성능이 좋다.
 
 ---
 
