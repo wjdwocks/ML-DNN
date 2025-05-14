@@ -42,18 +42,37 @@
 ## 2. Confidence-Aware Multi-Teacher KD (CA-MKD, 2022)
 
 - **제안 배경**  
-  Teacher의 예측 품질이 고르지 않으면 단순 평균은 오히려 성능 저하  
-  → Teacher 신뢰도를 반영한 가중 평균 구조 제안
+  다중 Teacher 모델을 단순 평균하여 지식 증류를 수행할 경우,  
+  각 Teacher의 예측 품질이 고르지 않으면 오히려 Student 모델에 **혼란을 주거나 성능을 저하시킬 수 있음**.  
+  예를 들어, 어떤 샘플은 Teacher A가 잘 예측하고, 다른 샘플은 Teacher B가 더 나은데  
+  모든 Teacher를 동일한 가중치로 반영하면 부정확한 지식이 주입될 수 있음.  
+  → 이를 해결하기 위해 **샘플 단위로 Teacher의 신뢰도(confidence)를 평가하고**,  
+  그에 따라 KD loss에 **가중치를 다르게 적용**하는 구조를 제안.
 
 - **방식 요약**  
-  - 각 Teacher의 예측에 대해 샘플 단위로 신뢰도(confidence) 측정  
-  - 높은 신뢰도를 가진 Teacher의 예측만 강조  
-  - 중간 feature map도 함께 활용
+  - **Teacher confidence 측정**:  
+    각 Teacher의 예측과 정답 간 Cross-Entropy를 기반으로 confidence score 계산  
+    → 낮은 CE → 높은 confidence
+  - **샘플 단위 confidence-weighted KD**:  
+    각 샘플에 대해 Teacher별 confidence를 softmax 정규화 후,  
+    **해당 샘플의 KD loss는 confidence-weighted sum으로 계산**
+  - **Feature-level KD**:  
+    최종 logit만 사용하는 것이 아니라, Teacher와 Student의 **중간 feature map** 사이의 차이도  
+    L2 distance 등을 사용하여 추가적인 KD loss로 활용  
+    → 모델 내부 표현까지 전달함으로써 학습 안정성 향상
+
+- **구현 고려사항**  
+  - 학습은 **batch 단위**로 진행되지만,  
+    KD loss는 반드시 **샘플 단위로 confidence-weighted aggregation** 후 평균해야 함  
+    (그렇지 않으면 CA-MKD의 설계 철학이 무력화됨)
+  - Feature distillation은 **특정 layer의 feature map**을 정렬하는 방식으로 진행되며,  
+    일반적으로 L2 loss 또는 cosine similarity 기반
 
 - **장점**  
-  - 잘못된 Teacher 영향 억제  
-  - 학습 안정성 향상  
-  - 다양한 Teacher 조합에 유연하게 대응
+  - 신뢰도 낮은 Teacher의 영향을 억제하여 **오류 전파 감소**
+  - **샘플마다 가장 적합한 Teacher의 지식만 반영**하여 학습 효율 향상
+  - 중간 표현까지 모방함으로써 **내부 표현 정렬 및 일반화 성능 강화**
+  - 다양한 Teacher 조합 (다른 도메인/모달리티) 상황에도 유연하게 대응 가능
 
 - **멀티모달 다중 Teacher 사용 가능 여부**  
   매우 적합 (각 modality의 Teacher 신뢰도 차이를 반영 가능)
