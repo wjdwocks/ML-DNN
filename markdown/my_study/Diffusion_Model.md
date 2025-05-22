@@ -23,8 +23,7 @@
         - t는 몇 단계에 걸쳐서 이미지에 노이즈를 추가할 지를 정하는 하이퍼파라미터
         - t가 클 수록 이미지가 더 천천히, 부드럽게 파괴되고, 복원이 쉽다. 하지만, 복원(reverse)도 t번 번에 걸쳐서 진행되기 때문에 생성 속도가 느려진다.
         - 밑의 수식의 Beta는 얼마나 강하게 노이즈를 넣을 지를 의미하고, 당연히 클 수록 노이즈가 빡시게 들어간다.
-<img src="https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/Study/Diffusion_Model/Noising.png" alt="no_grad" width="700">
-
+        <img src="https://github.com/wjdwocks/ML-DNN/raw/main/markdown/25년/Study/Diffusion_Model/Noising.png" alt="no_grad" width="700">
     * Reverse Process
         - x_t ~ N(0, I) 에서 시작해서, 거꾸로 가며 이미지를 복원하는 과정을 학습한다.
         - 사실상 이 과정에서 노이즈된 이미지를 복원하는 것을 학습한다.
