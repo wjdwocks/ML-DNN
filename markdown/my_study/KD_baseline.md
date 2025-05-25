@@ -68,3 +68,9 @@ loss_feature_kd = MSE(student.hidden_vec, teacher_sig.hidden_vec.detach())
 loss_kd_sig2img = MSE(student_img_feature, teacher_sig_feature.detach())
 loss_kd_img2sig = MSE(student_sig_feature, teacher_img_feature.detach())
 ```
+
+### Frequency Attention for Knowledge Distillation, 2024.3.9
+* 
+
+
+### CRD - 2024, 
