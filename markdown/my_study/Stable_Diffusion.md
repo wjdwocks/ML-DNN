@@ -19,7 +19,7 @@
         - RGB 이미지를 VAE를 통해 Latent Vector로 압축한다.
     * Forward Process (노이즈 추가)
         - 시간 t에 대해서 일정한 스케줄에 따라 z_0에 노이즈를 섞어 z_t를 만듦.
-    * Text Prompt Encoding
+    * Text Prompt Encoding (요게 중요함...)
         - 텍스트 프롬프트 -> CLIP Text Encoding -> Text Embedding c를 추가함.
         - 이 텍스트 임베딩도 학습이 되어야 하며, latent vector z에 c가 더해지는(?) 방식으로 진행됨.
     * U-Net 학습
