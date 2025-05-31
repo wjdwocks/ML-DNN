@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument('--lr',type = float ,default=0.001)
     parser.add_argument('--batch_size',type = int ,default=128)    
     parser.add_argument('--epochs',type = int,default=100)
-    parser.add_argument('--ckpt',  type = str,help = 'define checkpoint path',default='steps_00001876.pt')
+    parser.add_argument('--ckpt',  type = str,help = 'define checkpoint path',default='results/steps_00001876.pt')
     parser.add_argument('--n_samples',type = int,help = 'define sampling amounts after every epoch trained',default=36)
     parser.add_argument('--model_base_dim',type = int,help = 'base dim of Unet',default=64)
     parser.add_argument('--timesteps',type = int,help = 'sampling steps of DDPM',default=1000)
@@ -83,28 +83,36 @@ def main(args):
     global_steps=1876
     for i in range(args.epochs):
         model.train()
+        # 전체 Training Dataset을 배치 단위로 불러들임.
         for j,(image,target) in enumerate(train_dataloader):
-            noise=torch.randn_like(image).to(device)
+            # 원본 이미지와 동일한 크기의 정규 분포 노이즈 생성. 
+            noise=torch.randn_like(image).to(device) 
+            # 이미지와 노이즈를 gpu로 이동
             image=image.to(device)
+            # 모델이 주어진 noisy image로부터 노이즈를 예측함(Denoising learning)
             pred=model(image,noise)
+            # 예측한 노이즈와 실제 노이즈 간의 차이를 Loss로 계산
             loss=loss_fn(pred,noise)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-            scheduler.step()
+            scheduler.step() # Learning Rate 갱신을 위한 코드
+            # EMA(step 마다 일정 주기로 moving average된 파라미터로 모델을 보관함)
             if global_steps%args.model_ema_steps==0:
                 model_ema.update_parameters(model)
             global_steps+=1
+            # 로그 출력 조건에 맞는 경우 현재 상태 출력
             if j%args.log_freq==0:
                 print("Epoch[{}/{}],Step[{}/{}],loss:{:.5f},lr:{:.5f}".format(i+1,args.epochs,j,len(train_dataloader),
                                                                     loss.detach().cpu().item(),scheduler.get_last_lr()[0]))
-            
+        # ----한 Epoch이 종료되고 난 뒤 ----
+        # 현재 모델과 EMA모델의 State-Dict 저장
         ckpt={"model":model.state_dict(),
                 "model_ema":model_ema.state_dict()}
-
+        # 폴더가 없다면 만들고, 파일 저장
         os.makedirs("results",exist_ok=True)
         torch.save(ckpt,"results/steps_{:0>8}.pt".format(global_steps))
-
+        # EMA 모델로 샘플 이미지 생성.
         model_ema.eval()
         samples=model_ema.module.sampling(args.n_samples,clipped_reverse_diffusion=not args.no_clip,device=device)
         save_image(samples,"results/steps_{:0>8}.png".format(global_steps),nrow=int(math.sqrt(args.n_samples)))
