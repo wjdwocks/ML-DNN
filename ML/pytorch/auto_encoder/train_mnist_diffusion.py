@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument('--lr',type = float ,default=0.001)
     parser.add_argument('--batch_size',type = int ,default=128)    
     parser.add_argument('--epochs',type = int,default=100)
-    parser.add_argument('--ckpt',type = str,help = 'define checkpoint path',default='')
+    parser.add_argument('--ckpt',  type = str,help = 'define checkpoint path',default='steps_00001876.pt')
     parser.add_argument('--n_samples',type = int,help = 'define sampling amounts after every epoch trained',default=36)
     parser.add_argument('--model_base_dim',type = int,help = 'base dim of Unet',default=64)
     parser.add_argument('--timesteps',type = int,help = 'sampling steps of DDPM',default=1000)
@@ -76,11 +76,11 @@ def main(args):
 
     #load checkpoint
     if args.ckpt:
-        ckpt=torch.load(args.ckpt)
+        ckpt=torch.load(args.ckpt) # .pt로 끝나는 모델을 불러올 것인가? 하는것임.
         model_ema.load_state_dict(ckpt["model_ema"])
         model.load_state_dict(ckpt["model"])
 
-    global_steps=0
+    global_steps=1876
     for i in range(args.epochs):
         model.train()
         for j,(image,target) in enumerate(train_dataloader):
