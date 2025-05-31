@@ -29,11 +29,11 @@ class StableDiffusion(nn.Module):
 
         self.model=Unet(timesteps,time_embedding_dim,in_channels,in_channels,base_dim,dim_mults)
 
-    def forward(self,x,noise):
+    def forward(self,x,noise, text_emb):
         # x:NCHW
         t=torch.randint(0,self.timesteps,(x.shape[0],)).to(x.device) # 배치에 있는 각 이미지마다, 0부터 (timesteps - 1) 사이의 랜덤한 timestep t를 하나씩 샘플링
         x_t=self._forward_diffusion(x,t,noise) # x: 원본 이미지 (x₀), t: 랜덤 timestep, noise: 정규분포 노이즈 → 이를 이용해 forward diffusion 공식을 따라 x_t 생성
-        pred_noise=self.model(x_t,t) # x_t (노이즈가 낀 이미지)와 시점 t를 넣어서, 그 안에 섞인 노이즈 ε를 예측함
+        pred_noise=self.model(x_t,t, text_emb) # x_t (노이즈가 낀 이미지)와 시점 t를 넣어서, 그 안에 섞인 노이즈 ε를 예측함
         # 여기서 x_t는 이밎 x_0와 e가 합쳐진 결과고, t는 그게 어느 시점인지를 알려주기 때문에, x_t안에 e가 어떻게 들어갔는지 학습할 수 있음.
         return pred_noise       
     '''
@@ -43,16 +43,16 @@ class StableDiffusion(nn.Module):
     '''
 
     @torch.no_grad()
-    def sampling(self,n_samples,clipped_reverse_diffusion=True,device="cuda"):
+    def sampling(self,n_samples,clipped_reverse_diffusion=True,device="cuda", text_emb = None):
         x_t=torch.randn((n_samples,self.in_channels,self.image_size,self.image_size)).to(device)
         for i in tqdm(range(self.timesteps-1,-1,-1),desc="Sampling"):
             noise=torch.randn_like(x_t).to(device)
             t=torch.tensor([i for _ in range(n_samples)]).to(device)
 
             if clipped_reverse_diffusion:
-                x_t=self._reverse_diffusion_with_clip(x_t,t,noise)
+                x_t=self._reverse_diffusion_with_clip(x_t,t,noise, text_emb)
             else:
-                x_t=self._reverse_diffusion(x_t,t,noise)
+                x_t=self._reverse_diffusion(x_t,t,noise, text_emb)
 
         x_t=(x_t+1.)/2. #[-1,1] to [0,1]
 
@@ -73,13 +73,13 @@ class StableDiffusion(nn.Module):
 
 
     @torch.no_grad()
-    def _reverse_diffusion(self,x_t,t,noise):
+    def _reverse_diffusion(self,x_t,t,noise, text_emb):
         '''
         p(x_{t-1}|x_{t})-> mean,std
 
         pred_noise-> pred_mean and pred_std
         '''
-        pred=self.model(x_t,t)
+        pred=self.model(x_t,t, text_emb=text_emb)
 
         alpha_t=self.alphas.gather(-1,t).reshape(x_t.shape[0],1,1,1)
         alpha_t_cumprod=self.alphas_cumprod.gather(-1,t).reshape(x_t.shape[0],1,1,1)

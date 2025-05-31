@@ -1,13 +1,17 @@
 import torch
 import torch.nn as nn
+from transformers import CLIPTokenizer, CLIPTextModel
 from torchvision.datasets import MNIST
 from torchvision import transforms 
 from torchvision.utils import save_image
+from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
-from Diffusion_Model import MNISTDiffusion
+from torch.utils.data import random_split
+from Diffusion_Model import StableDiffusion
 from utils import ExponentialMovingAverage
+from PIL import Image
 import os
 import math
 import argparse
@@ -53,9 +57,9 @@ def create_dataloaders(batch_size, image_size=224, num_workers=4, data_root="ani
 def parse_args():
     parser = argparse.ArgumentParser(description="Training MNISTDiffusion")
     parser.add_argument('--lr',type = float ,default=0.001)
-    parser.add_argument('--batch_size',type = int ,default=128)    
+    parser.add_argument('--batch_size',type = int ,default=2)    
     parser.add_argument('--epochs',type = int,default=100)
-    parser.add_argument('--ckpt',  type = str,help = 'define checkpoint path',default='results/steps_00001876.pt')
+    parser.add_argument('--ckpt',  type = str,help = 'define checkpoint path',default='anime_results/steps_00037339.pt')
     parser.add_argument('--n_samples',type = int,help = 'define sampling amounts after every epoch trained',default=9)
     parser.add_argument('--model_base_dim',type = int,help = 'base dim of Unet',default=64)
     parser.add_argument('--timesteps',type = int,help = 'sampling steps of DDPM',default=1000)
@@ -72,12 +76,38 @@ def parse_args():
 
 def main(args):
     device="cpu" if args.cpu else "cuda"
-    train_dataloader,test_dataloader, idx_to_text=create_dataloaders(batch_size=args.batch_size,image_size=28)
+    train_dataloader,test_dataloader, idx_to_text=create_dataloaders(batch_size=args.batch_size,image_size=224)
     model=StableDiffusion(timesteps=args.timesteps,
                 image_size=224,
                 in_channels=3,
                 base_dim=args.model_base_dim,
                 dim_mults=[2,4]).to(device)
+    
+    #idx_to_text 보기
+    print('idx_to_text.items() : ', idx_to_text.items())
+
+    # 미리 각 label에 대한 text embedding을 만들어서 넣어둠.
+    # 1. Tokenizer 및 TextEncoder 로드
+    tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
+    text_encoder = CLIPTextModel.from_pretrained("openai/clip-vit-base-patch32").to(device)
+    text_encoder.eval()  # 학습 안 함
+    for p in text_encoder.parameters():
+        p.requires_grad = False
+        
+    # 2. 각 label index에 대한 text embedding 생성 및 캐싱
+    label_emb_dict = {}
+    for idx, label_text in idx_to_text.items():
+        # ① 텍스트 → 토큰
+        inputs = tokenizer([label_text], return_tensors="pt", padding=True, truncation=True).to(device)
+
+        # ② 텍스트 → 임베딩
+        with torch.no_grad():
+            text_emb = text_encoder(**inputs).last_hidden_state  # [1, L, D]
+
+        # ③ 첫 배치 차원 제거 → [L, D] 형태로 저장
+        label_emb_dict[idx] = text_emb.mean(dim=1).squeeze(0)  # [1, D]
+    
+    ############################
 
     #torchvision ema setting
     #https://github.com/pytorch/vision/blob/main/references/classification/train.py#L317
@@ -96,17 +126,19 @@ def main(args):
         model_ema.load_state_dict(ckpt["model_ema"])
         model.load_state_dict(ckpt["model"])
 
-    global_steps=1876
+    global_steps=0
     for i in range(args.epochs):
         model.train()
         # 전체 Training Dataset을 배치 단위로 불러들임.
-        for j,(image,target,idx_to_text) in enumerate(train_dataloader):
+        for j,(image,label) in enumerate(train_dataloader):
             # 원본 이미지와 동일한 크기의 정규 분포 노이즈 생성. 
             noise=torch.randn_like(image).to(device) 
             # 이미지와 노이즈를 gpu로 이동
             image=image.to(device)
+            # label index를 보고, text_emb vector로 변환.
+            text_emb = torch.stack([label_emb_dict[l.item()] for l in label]).to(device)  # [B, L, D]
             # 모델이 주어진 noisy image로부터 노이즈를 예측함(Denoising learning)
-            pred=model(image,noise)
+            pred=model(image, noise, text_emb)
             # 예측한 노이즈와 실제 노이즈 간의 차이를 Loss로 계산
             loss=loss_fn(pred,noise)
             loss.backward()
@@ -126,12 +158,18 @@ def main(args):
         ckpt={"model":model.state_dict(),
                 "model_ema":model_ema.state_dict()}
         # 폴더가 없다면 만들고, 파일 저장
-        os.makedirs("results",exist_ok=True)
-        torch.save(ckpt,"results/steps_{:0>8}.pt".format(global_steps))
+        os.makedirs("anime_results",exist_ok=True)
+        torch.save(ckpt,"anime_results/steps_{:0>8}.pt".format(i))
         # EMA 모델로 샘플 이미지 생성.
         model_ema.eval()
-        samples=model_ema.module.sampling(args.n_samples,clipped_reverse_diffusion=not args.no_clip,device=device)
-        save_image(samples,"results/steps_{:0>8}.png".format(global_steps),nrow=int(math.sqrt(args.n_samples)))
+        
+        # prompt 생성 및 embedding
+        prompt = tokenizer(['higurashi'], return_tensors="pt", padding=True, truncation=True).to(device)
+        prompt_emb = text_encoder(**prompt).last_hidden_state  # [1, L, D]
+        prompt_emb = prompt_emb.mean(dim=1).squeeze(0)
+        
+        samples=model_ema.module.sampling(args.n_samples,clipped_reverse_diffusion=not args.no_clip,device=device, text_emb = prompt_emb)
+        save_image(samples,"anime_results/anime_steps_{:0>8}.png".format(i),nrow=int(math.sqrt(args.n_samples)))
 
 if __name__=="__main__":
     args=parse_args()
