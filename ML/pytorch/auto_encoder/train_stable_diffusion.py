@@ -12,16 +12,41 @@ import os
 import math
 import argparse
 
-def create_mnist_dataloaders(batch_size,image_size=224,num_workers=4):
-    
-    preprocess=transforms.Compose([transforms.Resize(224),\
-                                    transforms.ToTensor(),\
-                                    transforms.Normalize([0.5],[0.5])]) #[0,1] to [-1,1]
 
-    
+# 비율 유지 padding + resize
+def pad_and_resize(img, size=224):
+    w, h = img.size
+    max_side = max(w, h)
+    padded = Image.new("RGB", (max_side, max_side), color=(255, 255, 255))
+    padded.paste(img, ((max_side - w) // 2, (max_side - h) // 2))
+    return padded.resize((size, size))
 
-    return DataLoader(train_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers),\
-            DataLoader(test_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers)
+
+def create_dataloaders(batch_size, image_size=224, num_workers=4, data_root="anime_images", train_ratio=0.9):
+    # 전처리 정의
+    preprocess = transforms.Compose([
+        transforms.Lambda(lambda img: pad_and_resize(img, size=image_size)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5], [0.5])  # [0, 1] → [-1, 1]
+    ])
+
+    # 전체 데이터셋 로드
+    full_dataset = ImageFolder(root=data_root, transform=preprocess)
+    
+    # idx → text 매핑
+    idx_to_text = {v: k for k, v in full_dataset.class_to_idx.items()}
+
+    # train / test split
+    train_size = int(train_ratio * len(full_dataset))
+    test_size = len(full_dataset) - train_size
+    train_dataset, test_dataset = random_split(full_dataset, [train_size, test_size])
+
+    # DataLoader 반환
+    return (
+        DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers),
+        DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers),
+        idx_to_text  # ← label index를 prompt 텍스트로 매핑하는 데 필요
+    )
 
 
 
@@ -47,10 +72,10 @@ def parse_args():
 
 def main(args):
     device="cpu" if args.cpu else "cuda"
-    train_dataloader,test_dataloader=create_mnist_dataloaders(batch_size=args.batch_size,image_size=28)
-    model=MNISTDiffusion(timesteps=args.timesteps,
-                image_size=28,
-                in_channels=1,
+    train_dataloader,test_dataloader, idx_to_text=create_dataloaders(batch_size=args.batch_size,image_size=28)
+    model=StableDiffusion(timesteps=args.timesteps,
+                image_size=224,
+                in_channels=3,
                 base_dim=args.model_base_dim,
                 dim_mults=[2,4]).to(device)
 
@@ -75,7 +100,7 @@ def main(args):
     for i in range(args.epochs):
         model.train()
         # 전체 Training Dataset을 배치 단위로 불러들임.
-        for j,(image,target) in enumerate(train_dataloader):
+        for j,(image,target,idx_to_text) in enumerate(train_dataloader):
             # 원본 이미지와 동일한 크기의 정규 분포 노이즈 생성. 
             noise=torch.randn_like(image).to(device) 
             # 이미지와 노이즈를 gpu로 이동

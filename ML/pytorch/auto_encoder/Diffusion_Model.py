@@ -4,7 +4,7 @@ import math
 from UNet import Unet
 from tqdm import tqdm
 
-class MNISTDiffusion(nn.Module):
+class StableDiffusion(nn.Module):
     def __init__(self,image_size,in_channels,time_embedding_dim=256,timesteps=1000,base_dim=32,dim_mults= [1, 2, 4, 8]):
         # time step : 몇 번에 걸쳐 노이즈를 추가/제거할지 정함.
         # beta, alpha, alphas_cumprod : 각 시간 t에서 사용할 노이즈의 분산 or 감쇠 정도를 미리 계산해둔 값.
