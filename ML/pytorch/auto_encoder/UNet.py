@@ -2,6 +2,26 @@ import torch
 import torch.nn as nn
 
 
+class CrossAttentionBlock(nn.Module):
+    def __init__(self, embed_dim, context_dim, num_heads=8):
+        super().__init__()
+        self.norm = nn.LayerNorm(embed_dim)
+        self.attn = nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)
+        self.proj = nn.Linear(embed_dim, embed_dim)
+
+    def forward(self, x, context):
+        """
+        x: [B, C, H, W]
+        context: [B, L, D]
+        """
+        B, C, H, W = x.shape
+        x_reshaped = x.view(B, C, -1).permute(0, 2, 1)  # [B, HW, C]
+        x_norm = self.norm(x_reshaped)
+        attn_out, _ = self.attn(x_norm, context, context)  # Q, K, V = x, context, context
+        out = self.proj(attn_out)
+        out = out.permute(0, 2, 1).view(B, C, H, W)
+        return x + out
+
 class ChannelShuffle(nn.Module):
     def __init__(self,groups):
         super().__init__()
@@ -89,9 +109,10 @@ class EncoderBlock(nn.Module):
                                     ResidualBottleneck(in_channels,out_channels//2))
 
         self.time_mlp=TimeMLP(embedding_dim=time_embedding_dim,hidden_dim=out_channels,out_dim=out_channels//2)
+        self.cross_attn = CrossAttentionBlock(embed_dim=out_channels//2, context_dim=768)  # CLIP base = 768
         self.conv1=ResidualDownsample(out_channels//2,out_channels)
     
-    def forward(self,x,t=None):
+    def forward(self,x,t=None, text_emb=None):
         x_shortcut=self.conv0(x)
         if t is not None:
             x=self.time_mlp(x_shortcut,t)
@@ -107,9 +128,10 @@ class DecoderBlock(nn.Module):
                                     ResidualBottleneck(in_channels,in_channels//2))
 
         self.time_mlp=TimeMLP(embedding_dim=time_embedding_dim,hidden_dim=in_channels,out_dim=in_channels//2)
+        self.cross_attn = CrossAttentionBlock(embed_dim=in_channels//2, context_dim=768)  # 동일하게
         self.conv1=ResidualBottleneck(in_channels//2,out_channels//2)
 
-    def forward(self,x,x_shortcut,t=None):
+    def forward(self,x,x_shortcut,t=None, text_emb=None):
         x=self.upsample(x)
         x=torch.cat([x,x_shortcut],dim=1)
         x=self.conv0(x)
@@ -118,6 +140,23 @@ class DecoderBlock(nn.Module):
         x=self.conv1(x)
 
         return x        
+
+class MidBlock(nn.Module):
+    def __init__(self, dim, text_dim):
+        super().__init__()
+        self.block = nn.Sequential(
+            ResidualBottleneck(dim, dim),
+            ResidualBottleneck(dim, dim),
+            ResidualBottleneck(dim, dim // 2)
+        )
+        self.cross_attn = CrossAttentionBlock(embed_dim=dim // 2, context_dim=text_dim)
+    
+    def forward(self, x, text_emb=None):
+        x = self.block(x)
+        if text_emb is not None:
+            x = self.cross_attn(x, text_emb)
+        return x
+
 
 class Unet(nn.Module):
     '''
@@ -136,23 +175,22 @@ class Unet(nn.Module):
         self.encoder_blocks=nn.ModuleList([EncoderBlock(c[0],c[1],time_embedding_dim) for c in channels])
         self.decoder_blocks=nn.ModuleList([DecoderBlock(c[1],c[0],time_embedding_dim) for c in channels[::-1]])
     
-        self.mid_block=nn.Sequential(*[ResidualBottleneck(channels[-1][1],channels[-1][1]) for i in range(2)],
-                                        ResidualBottleneck(channels[-1][1],channels[-1][1]//2))
+        self.mid_block = MidBlock(channels[-1][1], text_dim=768)
 
         self.final_conv=nn.Conv2d(in_channels=channels[0][0]//2,out_channels=out_channels,kernel_size=1)
 
-    def forward(self,x,t=None):
+    def forward(self,x,t=None, text_emb=None):
         x=self.init_conv(x)
         if t is not None:
             t=self.time_embedding(t)
         encoder_shortcuts=[]
         for encoder_block in self.encoder_blocks:
-            x,x_shortcut=encoder_block(x,t)
+            x,x_shortcut=encoder_block(x,t, text_emb=text_emb)
             encoder_shortcuts.append(x_shortcut)
         x=self.mid_block(x)
         encoder_shortcuts.reverse()
         for decoder_block,shortcut in zip(self.decoder_blocks,encoder_shortcuts):
-            x=decoder_block(x,shortcut,t)
+            x=decoder_block(x,shortcut,t, text_emb=text_emb)
         x=self.final_conv(x)
 
         return x
