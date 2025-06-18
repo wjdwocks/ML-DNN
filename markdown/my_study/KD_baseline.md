@@ -17,36 +17,40 @@ loss_kd = KL(student_logits, avg_teacher_logits)
 
 ### 3. CAMKD (Class Activation Map Knowledge Distillation)
 
-* CNN 기반 Teacher와 Student 간의 CAM을 비교하여, 시각적 근거를 Distillation해줌.
-* GAF, PI는 이미지 기반이므로 CAM 생성 가능
-* Student의 이미지 branch가 존재해야 함
-* 코드가 있는지 모르겠다.
+- CAMKD (여러 Teacher 중 더 똑똑한 Teacher의 Knowledge를 더 많이 반영하도록 하는 방식)
+    * 각 Teacher 로부터 CE_Loss를 계산함. → Confidence 측정
+    * 그 Teacher들의 CE_Loss들을 가지고, 1 - (Softmax)연산을 통해 loss가 더 낮은 Teacher의 가중치를 더 높게 설정함. → Attention 가중치 계산
+    * 각 Teacher들의 KD_Loss를 계산함. 
+    * 위에서 얻은 가중치로 KD_Loss의 비중을 결정한다.
+    * Student의 CE_Loss와 얻어진 KD_Loss를 합쳐서 최종 Loss가 구성됨.
 
-```python
-feat_t_gaf = teacher_gaf.get_feature(x_gaf).detach()
-feat_s_gaf = student.get_feature_gaf(x_gaf)
-cam_t = get_cam(feat_t_gaf, teacher_gaf.fc[y]) # 여기서 CAM을 얻어내고
-cam_s = get_cam(feat_s_gaf, student.fc[y])
-loss_cam = MSE(cam_t, cam_s) # 여기서 둘을 MSE로 비교해서 Loss 계산
-```
-
-전체 Loss 예시:
-
-```python
-loss_total = lambda1 * ce_loss + lambda2 * KD_loss + lambda3 * cam_loss
-```
+- 3Teacher MultiModal KD에서의 적용
+  * 1D CNN 기반 Teacher와 2D CNN 기반 Teacher이 중간 feature들은 다르지만, output 의 logits은 똑같기 때문에 크게 문제될 것은 없었다.
+  * CAMKD는 이런 멀티모달 환경에서도 쉽게 적용할 수 있다는게 장점인듯.
 
 ### 4. EBKD (Evidence-Based Knowledge Distillation)
 
-* Teacher의 판단 근거 (evidence, CAM 또는 attention map 등)를 Student에게 전달
-* Cross-modal하게 evidence를 통합하여 비교하는 것도 가능
-
+- 각 Teacher들의 logits 분포를 확인하고, 그것을 통해 Entropy(출력 분포의 불확실성)을 측정한다.
 ```python
-attn_sig = teacher_sig.get_attention(x_sig).detach()
-cam_gaf = teacher_gaf.get_cam(x_gaf).detach()
-student_attn = student.get_cross_attention(x_sig, x_gaf)
-loss_ebkd = MSE(student_attn, fuse(attn_sig, cam_gaf))
+probt = F.softmax(teacher_outputs, dim=1)   # teacher1 (GAF)
+probt2 = F.softmax(teacher_outputs2, dim=1) # teacher2 (PI)
+probt3 = F.softmax(teacher_outputs3, dim=1) # teacher3 (SIG)
 ```
+
+- Entropy가 낮을수록 Teahcer의 출력이 확신이 있다는 의미이고, Entropy가 클 수록 출력이 불확실하다는 것이다.
+```python
+entropy1 = torch.sum(-probt * torch.log(torch.clamp(probt, min=1e-8, max=1.0-1e-8)), dim=1)
+entropy2 = torch.sum(-probt2 * torch.log(torch.clamp(probt2, min=1e-8, max=1.0-1e-8)), dim=1)
+entropy3 = torch.sum(-probt3 * torch.log(torch.clamp(probt3, min=1e-8, max=1.0-1e-8)), dim=1)
+```
+- 각 Teacher의 Entropy 값을 통해 가중치를 결정한다.
+```python
+totalep = entropy1 + entropy2 + entropy3
+e1 = 1 - entropy1 / totalep
+e2 = 1 - entropy2 / totalep
+e3 = 1 - entropy3 / totalep
+```
+- 즉, Teacher들의 출력 분포를 보고, 헷갈리지 않아하는(Confidence가 높은) Teacher에게 높은 가중치를 부여해주는 방식.
 
 ### 5. Enhancing Time Series Anomaly Detection: A KD Approach (2024)
 
