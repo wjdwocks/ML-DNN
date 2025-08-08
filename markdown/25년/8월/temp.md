@@ -1,25 +1,23 @@
-In the single teacher setting, the teacher model is designed to process the Image Representation (IR) derived from the raw time series data. This teacher network is based on a 2D convolutional neural network (CNN) architecture tailored for image inputs. Importantly, the teacher is pretrained and its parameters remain fixed during the knowledge distillation process, serving as a stable source of supervisory signals.
+## Single Teacher Setting Architecture 예시.
+In the single-teacher setting, the teacher network is composed of 2D convolutional layers to process Image Representations (IR) derived from the raw time series, whereas the student network is composed of 1D convolutional layers to process the raw signal data. The IR is either a GAF image or a PI. To ensure consistency across IR types and enable a unified teacher architecture, all IRs are resized to $64 \times 64$ pixels.
 
-As depicted in Figure X, the teacher model receives the 
-64
-×
-64
-64×64 pixel IR and extracts high-level feature representations through multiple convolutional stages followed by fully connected layers. The final output of the teacher network is a set of logits 
-𝑧
-𝑇
-z 
-T
-​
-  representing class predictions.
+As shown in Figure~X(a), the student receives the raw 1D time-series input, while the teacher takes the corresponding 2D Image Representation (e.g., GAF or PI). The teacher is a pretrained 2D-CNN kept frozen during training, and thus serves only to provide soft targets. Learning proceeds with two terms: (i) a cross-entropy (CE) loss between the student's logits $z_S$ and the hard labels, and (ii) a knowledge-distillation (KD) loss that matches the student's softened logits to the teacher's softened logits. The single-teacher training objective is
+\[
+\mathcal{L}_{\text{single}} = (1-\lambda)\cdot \mathcal{L}_{\mathrm{CE}} + \lambda \cdot \mathcal{L}_{\mathrm{KD}},
+\]
+where $0 \le \lambda \le 1$ balances the cross-entropy term and the KD term.
+As a result, the student—although trained only on raw time-series—learns complementary information distilled from the teacher’s image representations. It therefore benefits from image-domain cues (e.g., global correlations in GAF/PI) without constructing IRs or using extra models at inference.
 
-Conversely, the student model operates directly on the raw one-dimensional time series data, employing a 1D CNN architecture adapted for sequential inputs. This architectural distinction reflects the difference in input modalities and ensures that each model is optimized for its respective data format. The student network outputs logits 
-𝑧
-𝑆
-z 
-S
-​
-  after processing.
 
-During training, the student is optimized by minimizing a composite loss function that combines the standard cross-entropy loss with a knowledge distillation (KD) loss. The KD loss aligns the student’s output distribution with the teacher’s softened logits, enabling effective knowledge transfer despite the differing input modalities.
 
-This framework allows the student model to benefit from the rich, modality-transformed information captured by the pretrained teacher, while maintaining the flexibility of processing raw signals during inference.
+
+## Persistence Image Extraction by Topological Data Analysis
+Topological Data Analysis (TDA) is a mathematical approach designed to extract global topological patterns from complex and high-dimensional data structures[reference]. Specifically, TDA is an approach that studies the shape of data by leveraging concepts from algebraic topology, aiming to quantify and summarize structural information such as connectivity, loops, and voids within datasets. Conventional signal processing methods for time-series data are often limited by their sensitivity to noise and inability to extract global structural features. In contrast, TDA effectively addresses these issues by emphasizing topological characteristics, thereby enabling robust and reliable extraction of global patterns even from noisy data[reference]. Particularly in time-series analysis, TDA effectively captures temporal dynamics and patterns that traditional approaches may overlook, making it suitable for extracting features that are invariant to noise and small perturbations.
+%
+The application of TDA begins with converting raw one-dimensional signal data into a high-dimensional point cloud representation[reference]. This transformation is typically performed using a sliding window embedding technique, where sequential segments of the signal are extracted and mapped into a higher-dimensional space. Each segment is thus represented as a point reflecting temporal patterns. The collection of these points forms a point cloud that captures the temporal relationships inherent in the original signal.[reference].
+%
+Next, persistent homology is computed from the point cloud. This step commonly employs the Vietoris-Rips method to build simplicial complexes[reference]. Points within a certain radius are connected, and as this radius gradually increases—a process known as filtration[reference]—topological features such as connected components, loops, and cavities emerge (birth) and disappear (death). The lifespan of these features is summarized in a Persistence Diagram (PD), which effectively encodes the intrinsic structure of the data, thereby providing robustness. However, a limitation of PDs is their irregular and variable size, which hinders direct integration with machine learning algorithms. To address this, PDs are transformed into Persistence Images (PI) by mapping each PD point onto a discretized grid weighted by Gaussian kernels. Concretely, each point in the PD is first transformed into a two-dimensional Gaussian kernel centered at the corresponding birth and persistence coordinates. These kernels are then accumulated on a predefined regular grid, producing a stable, fixed-size vectorized image representation (PI). This results in fixed-size representations that are well-suited for machine learning tasks.
+
+
+## GAF Image Extraction
+Gramian Angular Field (GAF) transforms a one-dimensional time series into a two-dimensional image by mapping normalized samples to angular coordinates on the unit circle and encoding pairwise relationships via the cosine of angle sums. Using GAF, correlations between different time steps are rendered as spatial patterns in an image, which makes long-range dependencies and phase interactions—often difficult to discern in the raw sequence—both visible and amenable to image-based analysis.
