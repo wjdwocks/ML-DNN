@@ -56,37 +56,34 @@ where $Q(\cdot)$ denotes the cross-entropy function, $l_S$ is the student’s lo
 \end{equation}
 where $l_T$ and $l_S$ are the logits of the teacher and student networks, respectively, and $\tau > 1$ is the temperature parameter used to soften the probability distributions. The KL term measures how closely the student’s output distribution aligns with that of the teacher.
 
-"일반적으로, KD loss는 teacher와 student의 logits을 align하는 logit-based loss 만을 사용하지만, teacher와 student의 intermediate layer에서 나온 feature 표현을 align하기 위한 feature-based loss도 연구되어왔다\cite{}. Feature-based distillation에서는, teacher와 student의 같은 위치의 중간 layer에서 feature를 추출한 뒤, 이들을 align하여 student가 teacher의 중간 표현까지도 학습하도록 할 수 있다. Tung et al.\cite{} proposed a feature-based knowledge distillation method based on pairwise similarity between samples. In that study, feature maps from intermediate layers of both the teacher and the student are converted into similarity maps, which are then used to guide the student’s training. The construction process of the similarity maps is as follows:
-\begin{equation} 
-    G = A \cdot A^\top, \quad A \in \mathbb{R}^{b \times chw}
-\end{equation}
-
-!!!!! 여기에 SPKD에서, normalized가 포함됨 이거 추가해야함.!!!!!
-
-where $A$ denotes the reshaped feature map. The original feature maps have the shape $(b, c, h, w)$, where $b$ is the batch size, $c$ is the number of output channels, and $h$ and $w$ are the output's height and width. $A$ is obtained by reshaping the original feature map into a matrix of shape $(b, chw)$. The distillation loss is then defined as the mean squared error (MSE) between the similarity maps of the teacher and the student:
-
+Conventional KD typically relies on logit-based losses that align the output logits of the teacher and the student. However, feature-based losses that align the intermediate representations of both networks have also been explored \cite{}. In feature-based distillation, feature maps are extracted from corresponding intermediate layers of the teacher and student, and then aligned, allowing the student to learn not only the final predictions but also the teacher’s hidden representations. Tung \emph{et al.} \cite{} proposed a feature-based KD method based on pairwise similarity between samples. In their approach, feature maps from intermediate layers are reshaped and converted into similarity maps, which are then used to guide the student’s training. The similarity maps are constructed as follows:
 \begin{equation}
-    \mathcal{L}_{SP}(G_T, G_S) = \frac{1}{b^2} \sum \left\| G_T - G_S \right\|^2
+G = \hat{A} \cdot \hat{A}^\top, \quad \hat{A} \in \mathbb{R}^{b \times chw},
 \end{equation}
-
-where $G_T$ and $G_S$ denote the similarity maps produced from the teacher and student.
-"similarity map을 이용한 feature based distillation은, teacher와 student로 부터 얻어진 map의 크기가 b x b로 일정하여, teacher와 student의 input이나, architecture가 달라도 direct하게 비교할 수 있다."
-
-"일반적으로, KD는 logits만을 이용한 계산을 하기 때문에, teacher와 student의 input 형태가 다른 경우에도 사용이 가능하고, similarity map을 사용하는 경우에도 teacher와 student의 input data 형태가 달라도 feature based KD를 사용할 수 있다는 장점이 있다는 얘기... 그리고, 서로 다른 modality data를 입력으로 받는 multiple teacher인 경우에도, 마찬가지로 각 teacher의 개별 kd loss의 합으로 표현할 수 있다는 이야기... 그래서 이것들을 포함한 최종 loss는 다음과 같이 된다는 얘기..." -> 이렇게 풀어가면 background 끝.
-
-
-
-
-
-
-The standard KD loss is computed solely based on the logits of the student and teacher models. Due to this characteristic, the teacher and student do not necessarily need to share the same input data shape or modality \cite{gou2021knowledge, ejasilomar}. This flexibility allows KD to be effectively applied even when the teacher and student use inputs from different data modalities, enabling the student to gain complementary information from diverse sources. 
-%
-Moreover, multiple teachers, each using different modalities, can be incorporated together in knowledge distillation. In this training process, the KD loss can be formulated as a weighted sum of the individual distillation losses from each teacher:
+where the original feature maps of shape $(b, c, h, w)$ are reshaped into $A \in \mathbb{R}^{b \times chw}$, and $\hat{A}$ denotes the row-normalized version of $A$. The distillation loss is then defined as the mean squared error (MSE) between the teacher’s and student’s similarity maps:
 \begin{equation}
-\mathcal{L}_{{KD}_m}
-= (1-\lambda)\,\mathcal{L}_{\mathrm{CE}}
-+ \lambda \Big[(1-\alpha)\,\mathcal{L}_{\mathrm{KD}_{T_1}}
-+ \alpha\,\mathcal{L}_{\mathrm{KD}_{T_2}}\Big]
+\mathcal{L}_{SP}(G_T, G_S) = \frac{1}{b^2} \sum \left| G_T - G_S \right|^2,
+\end{equation}
+where $G_T$ and $G_S$ are the similarity maps produced by the teacher and student.
+
+KD can also be applied even when the teacher and student differ in model architecture or input modality. In logit-based distillation, the student only needs to match the class probability distribution, which depends solely on the number of classes in the dataset. Similarly, in feature-based distillation using similarity maps, the resulting matrices depend only on the batch size, ensuring that the teacher and student produce similarity maps of the same dimension regardless of their architectures or input modalities.
+This property further extends to the multi-teacher setting. When multiple teachers are used, each possibly trained with different architectures or modalities, the student can still learn from all of them. In this case, the overall objective is defined as the weighted sum of the individual KD losses from each teacher:
+\begin{equation}
+\mathcal{L}_{KD}^{(m)} 
+= (1-\lambda)\,\mathcal{L}_{CE}
++ \lambda \sum_{n=1}^{N} \alpha_n \, \mathcal{L}_{KD}^{(T_n)},
 \label{equ:KD_multi}
 \end{equation}
-where, $\alpha$ is range in $[0,1]$ controls the relative contributions of the one teacher ($T_1$) and the other ($T_2$), and $\mathcal{L}_{\mathrm{KD}_{T_1}}$ and $\mathcal{L}_{\mathrm{KD}_{T_2}}$ are computed with Equation \eqref{kd_loss}. This is applicable in our experiments utilizing different architectural teachers, such as one is trained with time-series and the other is with IR.
+where $0 < \lambda < 1$ balances the CE loss and the KD loss, $N$ is the number of teachers, $\alpha_n$ is the weight assigned to the $n$-th teacher, and $\mathcal{L}_{KD}^{(T_n)}$ denotes the individual KD loss with teacher $T_n$.
+Through this formulation, the student is able to acquire complementary knowledge from multiple heterogeneous teachers, thereby improving both its generalization ability and robustness across diverse input modalities.
+
+## Proposed Method
+In this section, we present the proposed multi-modality KD framework, which is designed to effectively transfer knowledge from multiple teachers to a single student model.
+Our approach incorporates three complementary modalities: raw time-series, PI, and GAF.
+Each modality is handled by a separately trained teacher network, while the student model uses only the time-series as input.
+Intermediate feature maps are extracted from all networks and converted into similarity maps, which are compared to compute the feature-based KD loss.
+In parallel, the student’s output logits are aligned with those of all teachers to compute the logit-based KD loss. 
+The final training objective is defined as a weighted sum of the cross-entropy loss, the logit-based KD loss, and the feature-based KD loss. 
+The following subsections detail each component of the framework, including image representation generation, loss formulation and the annealing strategy.
+
+### Extracting Persistence Image
