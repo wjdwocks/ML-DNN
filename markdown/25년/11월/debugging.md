@@ -1,9 +1,3 @@
-### MMVQShape 해야할 것
-1. 우선, Sub-Actions의 Embedding을 가지고, 원본 Label의 Embedding을 Reconstruction하는 것이 잘 되는지 확인
-    - 이것은 이 방법을 통해서 Sub-Action이 원본의 Label에 대한 정보를 잘 가지고 있는지를 확인하기 위함.
-2. Clustering을 해서 몇몇의 Sub-Action만 남기고 그 클러스터들 만으로도 Reconstruction이 잘 되는지 확인?
-    - 우리가 Action Codebook을 만들 때에는 이런식으로 Embedding이 들어왔을 때 가까운 Sub-Action으로 변환되고, 그것을 이용할 것이기 때문에 봐야하는거 아닌가? 라는 생각.
-
 ### 전처리된 Text 입력값
 - 각 Action Labels에 대해서 아레의 것들이 5개씩 저장됨. (merged_text)
     - Arm: Wrist swings slightly forward with low amplitude. Leg: Heel contacts ground initiating slow step.
